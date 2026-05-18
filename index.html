@@ -15,7 +15,9 @@
     <div class="toolbar">
       <form class="auth-bar" id="authForm">
         <input class="auth-email" id="authEmail" type="email" autocomplete="email" placeholder="Email" data-i18n-placeholder="emailPlaceholder">
-        <button class="btn" id="authSubmitBtn" type="submit" data-i18n="sendLoginLink">Sign in</button>
+        <input class="auth-password" id="authPassword" type="password" autocomplete="current-password" placeholder="Password" data-i18n-placeholder="passwordPlaceholder">
+        <button class="btn" id="authSubmitBtn" type="submit" data-i18n="signIn">Sign in</button>
+        <button class="btn" id="authSignupBtn" type="button" data-i18n="createAccount">Create account</button>
         <span class="auth-user" id="authUser"></span>
         <button class="btn" id="authLogoutBtn" type="button" data-i18n="logout" hidden>Log out</button>
       </form>

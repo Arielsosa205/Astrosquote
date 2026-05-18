@@ -28,6 +28,12 @@ En Supabase, ir tambien a **Authentication > URL Configuration**:
 1. En **Site URL**, poner la URL de Netlify.
 2. En **Redirect URLs**, agregar esa misma URL.
 
+En **Authentication > Providers > Email**:
+
+1. Dejar activado el provider de Email.
+2. Dejar activado el login con contraseña.
+3. Si queres evitar cualquier mail de confirmacion, desactivar **Confirm email**.
+
 ## 2. Subir a Netlify
 
 Lo ideal es subir esta carpeta con Netlify CLI o conectarla a GitHub.
@@ -65,7 +71,7 @@ El valor de `SUPABASE_STORAGE_BUCKET` es:
 `quote-images`
 
 Importante: la `service_role key` va solo en Netlify, nunca dentro del HTML.
-La `anon key` es publica y se usa para enviar el link de ingreso por email.
+La `anon key` es publica y se usa desde el navegador para iniciar sesion con email y contraseña.
 
 ## 4. Redeploy
 
@@ -84,9 +90,9 @@ significa que todavia no esta conectada a Supabase.
 ## 5. Flujo de uso
 
 1. Crear **New quote**.
-2. Ingresar con email para tener historial propio.
+2. Ingresar con email y contraseña para tener historial propio, o seguir en **Guest mode** sin cuenta.
 3. Poner nombre, por ejemplo `Quote 1`.
 4. Agregar fotos/productos.
-5. Guardar con **Save**.
+5. Completar precio del producto, flete, cantidades y guardar con **Save**.
 6. Abrir presupuestos anteriores desde **History**.
 7. Usar **Guest link** para compartir solo ese presupuesto.

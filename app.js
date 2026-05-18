@@ -18,6 +18,7 @@
       appTitle: "Supplier quotes",
       language: "Language",
       localMode: "Local mode",
+      guestLocalMode: "Guest mode",
       onlineSaving: "Online saving",
       newQuote: "New quote",
       history: "History",
@@ -43,11 +44,17 @@
       supplierPlaceholder: "Supplier name",
       addProduct: "Add product",
       emailPlaceholder: "Email",
-      sendLoginLink: "Sign in",
-      sendingLoginLink: "Sending...",
+      passwordPlaceholder: "Password",
+      signIn: "Sign in",
+      signingIn: "Signing in...",
+      createAccount: "Create account",
+      creatingAccount: "Creating...",
       logout: "Log out",
-      loginLinkSent: "Check your email to sign in",
-      loginError: "Could not send sign-in link",
+      loginSuccess: "Signed in",
+      loginError: "Could not sign in",
+      accountCreated: "Account created",
+      accountCreatedCheckEmail: "Account created, but Supabase still requires email confirmation.",
+      signupError: "Could not create account",
       signedOut: "Signed out",
       authRequired: "Sign in to save online history",
       guestMode: "Guest quote",
@@ -69,6 +76,9 @@
       deleteQuoteError: "Could not delete quote",
       removePhoto: "Remove photo",
       photoDrop: "Tap, drop, or paste photos here",
+      productPrice: "Product price",
+      freight: "Freight",
+      unitTotal: "Unit total",
       priceInclShipping: "Price incl. shipping",
       availableSizes: "Available sizes",
       availableSizesPlaceholder: "Ex: M-5XL / M up to 5XL",
@@ -108,6 +118,7 @@
       appTitle: "供应商报价",
       language: "语言",
       localMode: "本地模式",
+      guestLocalMode: "访客模式",
       onlineSaving: "在线保存",
       newQuote: "新报价",
       history: "历史记录",
@@ -133,11 +144,17 @@
       supplierPlaceholder: "供应商名称",
       addProduct: "添加产品",
       emailPlaceholder: "Email",
-      sendLoginLink: "Sign in",
-      sendingLoginLink: "Sending...",
+      passwordPlaceholder: "Password",
+      signIn: "Sign in",
+      signingIn: "Signing in...",
+      createAccount: "Create account",
+      creatingAccount: "Creating...",
       logout: "Log out",
-      loginLinkSent: "Check your email to sign in",
-      loginError: "Could not send sign-in link",
+      loginSuccess: "Signed in",
+      loginError: "Could not sign in",
+      accountCreated: "Account created",
+      accountCreatedCheckEmail: "Account created, but Supabase still requires email confirmation.",
+      signupError: "Could not create account",
       signedOut: "Signed out",
       authRequired: "Sign in to save online history",
       guestMode: "Guest quote",
@@ -159,6 +176,9 @@
       deleteQuoteError: "Could not delete quote",
       removePhoto: "删除图片",
       photoDrop: "添加、拖放或粘贴图片到这里",
+      productPrice: "产品价格",
+      freight: "运费",
+      unitTotal: "单件总价",
       priceInclShipping: "含运费价格",
       availableSizes: "可供尺码",
       availableSizesPlaceholder: "例：M-5XL / M 到 5XL",
@@ -207,8 +227,8 @@
   const TOUR_STEPS = [
     {
       selector: "#authForm",
-      en: ["Sign in", "Enter your email to receive a magic link. Once signed in, your online quote history is private to your user."],
-      zh: ["登录", "输入邮箱接收登录链接。登录后，线上报价历史只属于当前用户。"]
+      en: ["Sign in", "Use email and password for private online history. Without signing in, you can keep working in guest mode."],
+      zh: ["登录", "使用邮箱和密码登录私人线上历史记录。未登录时也可以用访客模式继续工作。"]
     },
     {
       selector: "#languageSelect",
@@ -237,8 +257,8 @@
     },
     {
       selector: "#addProductBtn",
-      en: ["Product lines", "Add products manually, then fill in description, supplier price, sizes, colors, measurements, and quantities."],
-      zh: ["产品行", "手动添加产品后，填写描述、供应商价格、尺码、颜色、尺寸信息和数量。"]
+      en: ["Product lines", "Add products manually, then fill in description, product price, freight, sizes, colors, measurements, and quantities."],
+      zh: ["产品行", "手动添加产品后，填写描述、产品价格、运费、尺码、颜色、尺寸信息和数量。"]
     },
     {
       selector: "#addPhotosBtn",
@@ -266,8 +286,9 @@
       {
         title: "1. Sign in and history",
         items: [
-          "Enter your email and open the magic link to use private online history.",
+          "Use email and password to save quotes in your private online history.",
           "If the chip says Local mode, quotes are stored only in this browser.",
+          "If the chip says Guest mode, you can work without an account and save locally in this browser.",
           "If the chip says Online saving, quotes are stored in Supabase under your user.",
           "If the chip says Guest quote, the visitor can open only the shared quote."
         ]
@@ -287,7 +308,7 @@
           "Add product creates an empty product line.",
           "Drop, paste, or tap photos to create a product from images.",
           "Select a product before using Photos to add more images to that product.",
-          "Fill price, available sizes, colors, measurements, and quantity by size."
+          "Fill product price, freight, available sizes, colors, measurements, and quantity by size."
         ]
       },
       {
@@ -304,8 +325,9 @@
       {
         title: "1. 登录和历史记录",
         items: [
-          "输入邮箱并打开登录链接，即可使用个人线上历史记录。",
+          "使用邮箱和密码登录，即可把报价保存到个人线上历史记录。",
           "如果状态显示 Local mode，报价只保存在当前浏览器。",
+          "如果状态显示 Guest mode，可以不登录账号，报价会保存在当前浏览器。",
           "如果状态显示 Online saving，报价会保存在 Supabase，并归属于当前用户。",
           "如果状态显示 Guest quote，访客只能打开被分享的单个报价。"
         ]
@@ -325,7 +347,7 @@
           "Add product 会创建一个空的产品行。",
           "拖放、粘贴或点击图片区域，可以从图片创建产品。",
           "先选择某个产品，再用 Photos 为该产品添加更多图片。",
-          "填写价格、可用尺码、颜色、尺寸信息和每个尺码的数量。"
+          "填写产品价格、运费、可用尺码、颜色、尺寸信息和每个尺码的数量。"
         ]
       },
       {
@@ -344,7 +366,9 @@
     modeChip: document.getElementById("modeChip"),
     authForm: document.getElementById("authForm"),
     authEmail: document.getElementById("authEmail"),
+    authPassword: document.getElementById("authPassword"),
     authSubmitBtn: document.getElementById("authSubmitBtn"),
+    authSignupBtn: document.getElementById("authSignupBtn"),
     authUser: document.getElementById("authUser"),
     authLogoutBtn: document.getElementById("authLogoutBtn"),
     languageSelect: document.getElementById("languageSelect"),
@@ -437,8 +461,9 @@
   function wireEvents() {
     els.authForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      await sendLoginLink();
+      await signInWithPassword();
     });
+    els.authSignupBtn.addEventListener("click", createPasswordAccount);
     els.authLogoutBtn.addEventListener("click", signOut);
 
     els.newQuoteBtn.addEventListener("click", async () => {
@@ -678,40 +703,100 @@
     state.user = payload?.sub ? { id: payload.sub, email: payload.email || "" } : null;
   }
 
-  async function sendLoginLink() {
+  async function signInWithPassword() {
     const email = els.authEmail.value.trim();
-    if (!email) {
-      els.authEmail.focus();
-      return;
-    }
+    const password = els.authPassword.value;
+    if (!requireAuthFields(email, password)) return;
     if (!state.authConfig.configured) await loadAuthConfig();
     if (!state.authConfig.configured) {
       showToast(t("loginError"));
       return;
     }
-    els.authSubmitBtn.textContent = t("sendingLoginLink");
+    els.authSubmitBtn.textContent = t("signingIn");
     els.authSubmitBtn.disabled = true;
+    els.authSignupBtn.disabled = true;
     try {
-      const redirectTo = `${window.location.origin}${window.location.pathname}`;
-      const response = await fetch(`${state.authConfig.supabaseUrl}/auth/v1/otp`, {
+      const response = await fetch(`${state.authConfig.supabaseUrl}/auth/v1/token?grant_type=password`, {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify({
-          email,
-          create_user: true,
-          redirect_to: redirectTo,
-          options: { redirectTo }
-        })
+        body: JSON.stringify({ email, password })
       });
       if (!response.ok) throw new Error(await responseError(response));
-      showToast(t("loginLinkSent"));
+      await setSessionFromAuthPayload(await response.json());
+      showToast(t("loginSuccess"));
     } catch (error) {
       console.warn(error);
       showToast(error.message ? `${t("loginError")}: ${error.message}` : t("loginError"));
     } finally {
-      els.authSubmitBtn.textContent = t("sendLoginLink");
+      els.authSubmitBtn.textContent = t("signIn");
       els.authSubmitBtn.disabled = false;
+      els.authSignupBtn.disabled = false;
     }
+  }
+
+  async function createPasswordAccount() {
+    const email = els.authEmail.value.trim();
+    const password = els.authPassword.value;
+    if (!requireAuthFields(email, password)) return;
+    if (!state.authConfig.configured) await loadAuthConfig();
+    if (!state.authConfig.configured) {
+      showToast(t("signupError"));
+      return;
+    }
+    els.authSubmitBtn.disabled = true;
+    els.authSignupBtn.disabled = true;
+    els.authSignupBtn.textContent = t("creatingAccount");
+    try {
+      const response = await fetch(`${state.authConfig.supabaseUrl}/auth/v1/signup`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ email, password })
+      });
+      if (!response.ok) throw new Error(await responseError(response));
+      const payload = await response.json();
+      if (payload.access_token || payload.session?.access_token) {
+        await setSessionFromAuthPayload(payload);
+        showToast(t("accountCreated"));
+      } else {
+        showToast(t("accountCreatedCheckEmail"));
+      }
+    } catch (error) {
+      console.warn(error);
+      showToast(error.message ? `${t("signupError")}: ${error.message}` : t("signupError"));
+    } finally {
+      els.authSignupBtn.textContent = t("createAccount");
+      els.authSubmitBtn.disabled = false;
+      els.authSignupBtn.disabled = false;
+    }
+  }
+
+  function requireAuthFields(email, password) {
+    if (!email) {
+      els.authEmail.focus();
+      return false;
+    }
+    if (!password) {
+      els.authPassword.focus();
+      return false;
+    }
+    return true;
+  }
+
+  async function setSessionFromAuthPayload(payload) {
+    const session = payload.session || payload;
+    if (!session?.access_token) throw new Error("No auth session returned");
+    state.session = {
+      accessToken: session.access_token,
+      refreshToken: session.refresh_token || "",
+      tokenType: session.token_type || "bearer",
+      expiresAt: Math.floor(Date.now() / 1000) + Number(session.expires_in || 3600)
+    };
+    els.authPassword.value = "";
+    saveStoredSession();
+    await loadUser();
+    updateAuthUI();
+    await loadQuotes();
+    render();
   }
 
   async function signOut() {
@@ -821,7 +906,9 @@
     const isSignedIn = Boolean(state.user && !isGuest);
     els.authForm.hidden = isGuest;
     els.authEmail.hidden = isGuest || isSignedIn;
+    els.authPassword.hidden = isGuest || isSignedIn;
     els.authSubmitBtn.hidden = isGuest || isSignedIn;
+    els.authSignupBtn.hidden = isGuest || isSignedIn;
     els.authUser.textContent = isGuest ? t("guestMode") : (isSignedIn ? state.user.email : "");
     els.authLogoutBtn.hidden = !isSignedIn;
     els.newQuoteBtn.disabled = isGuest;
@@ -868,10 +955,24 @@
   function positionTourCard(target) {
     const card = els.tourCard;
     const margin = 14;
-    const width = card.offsetWidth;
-    const height = card.offsetHeight;
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
+    const mobile = viewportWidth <= 760;
+
+    if (mobile) {
+      card.style.left = `${margin}px`;
+      card.style.right = `${margin}px`;
+      card.style.top = "auto";
+      card.style.bottom = `${margin}px`;
+      card.style.width = `calc(100vw - ${margin * 2}px)`;
+      return;
+    }
+
+    card.style.right = "auto";
+    card.style.bottom = "auto";
+    card.style.width = "";
+    const width = card.offsetWidth;
+    const height = card.offsetHeight;
 
     if (!target) {
       card.style.left = `${Math.max(margin, (viewportWidth - width) / 2)}px`;
@@ -994,7 +1095,8 @@
 
   function updateModeChip() {
     const isGuest = Boolean(state.guestToken);
-    els.modeChip.textContent = isGuest ? t("guestMode") : (state.cloud ? t("onlineSaving") : t("localMode"));
+    const isLocalGuest = !isGuest && !state.cloud && state.authConfig.configured;
+    els.modeChip.textContent = isGuest ? t("guestMode") : (state.cloud ? t("onlineSaving") : (isLocalGuest ? t("guestLocalMode") : t("localMode")));
     els.modeChip.style.color = isGuest || state.cloud ? "#0f766e" : "#92400e";
     els.modeChip.style.background = isGuest || state.cloud ? "#e5f4f1" : "#fff7ed";
     els.modeChip.style.borderColor = isGuest || state.cloud ? "#bfe2dc" : "#fed7aa";
@@ -1300,8 +1402,12 @@
         <div class="supplier-block">
           <div class="supplier-row">
             <div class="field supplier-field">
-              <label>${escapeHtml(t("priceInclShipping"))}</label>
-              <input inputmode="decimal" data-field="priceWithShipping" value="${escapeAttr(product.priceWithShipping)}" placeholder="USD">
+              <label>${escapeHtml(t("productPrice"))}</label>
+              <input inputmode="decimal" data-field="productPrice" value="${escapeAttr(product.productPrice)}" placeholder="USD">
+            </div>
+            <div class="field supplier-field">
+              <label>${escapeHtml(t("freight"))}</label>
+              <input inputmode="decimal" data-field="freight" value="${escapeAttr(product.freight)}" placeholder="USD">
             </div>
             <div class="field supplier-field">
               <label>${escapeHtml(t("availableSizes"))}</label>
@@ -1332,8 +1438,16 @@
             <span>${escapeHtml(t("units"))}</span>
           </div>
           <div class="total-card">
-            <strong data-total="price">${formatMoney(product.priceWithShipping)}</strong>
-            <span>${escapeHtml(t("priceInclShipping"))}</span>
+            <strong data-total="base">${formatMoney(product.productPrice)}</strong>
+            <span>${escapeHtml(t("productPrice"))}</span>
+          </div>
+          <div class="total-card">
+            <strong data-total="freight">${formatMoney(product.freight)}</strong>
+            <span>${escapeHtml(t("freight"))}</span>
+          </div>
+          <div class="total-card">
+            <strong data-total="unit">${formatMoney(productUnitTotal(product))}</strong>
+            <span>${escapeHtml(t("unitTotal"))}</span>
           </div>
           <div class="total-card">
             <strong data-total="product">${formatMoney(productTotal(product))}</strong>
@@ -1356,10 +1470,14 @@
   function updateProductTotals(card, product) {
     if (!card) return;
     const units = card.querySelector('[data-total="units"]');
-    const price = card.querySelector('[data-total="price"]');
+    const base = card.querySelector('[data-total="base"]');
+    const freight = card.querySelector('[data-total="freight"]');
+    const unit = card.querySelector('[data-total="unit"]');
     const total = card.querySelector('[data-total="product"]');
     if (units) units.textContent = productUnits(product);
-    if (price) price.textContent = formatMoney(product.priceWithShipping);
+    if (base) base.textContent = formatMoney(product.productPrice);
+    if (freight) freight.textContent = formatMoney(product.freight);
+    if (unit) unit.textContent = formatMoney(productUnitTotal(product));
     if (total) total.textContent = formatMoney(productTotal(product));
   }
 
@@ -1462,6 +1580,8 @@
       code: nextProductCode(quote),
       name: "",
       status: "To quote",
+      productPrice: "",
+      freight: "",
       priceWithShipping: "",
       availableSizes: "",
       availableColors: "",
@@ -1505,12 +1625,19 @@
       const legacyValue = size === "2XL" ? product.sizes?.XXL : undefined;
       sizes[size] = Math.max(0, Math.floor(toNumber(product.sizes?.[size] ?? legacyValue)));
     });
+    const hasSplitPrice = product.productPrice !== undefined || product.product_price !== undefined || product.freight !== undefined || product.shipping !== undefined;
+    const productPriceSource = hasSplitPrice ? (product.productPrice ?? product.product_price ?? product.price ?? product.priceWithShipping ?? "") : (product.priceWithShipping ?? product.price ?? "");
+    const freightSource = product.freight ?? product.shipping ?? product.freightCost ?? product.shippingCost ?? "";
+    const productPrice = moneyField(productPriceSource);
+    const freight = moneyField(freightSource);
     return {
       id: String(product.id || makeId("prod")),
       code: String(product.code || "A001"),
       name: String(product.name || product.description || ""),
       status: normalizeProductStatus(product.status),
-      priceWithShipping: product.priceWithShipping === "" ? "" : toNumber(product.priceWithShipping ?? product.price),
+      productPrice,
+      freight,
+      priceWithShipping: priceFieldsAreEmpty(productPrice, freight) ? "" : toNumber(productPrice) + toNumber(freight),
       availableSizes: String(product.availableSizes || ""),
       availableColors: String(product.availableColors || ""),
       requestSizeChart: product.requestSizeChart !== false,
@@ -1548,8 +1675,14 @@
       product.sizes[size] = Math.max(0, Math.floor(toNumber(value)));
       return;
     }
-    if (field === "priceWithShipping") {
-      product.priceWithShipping = value === "" ? "" : toNumber(value);
+    if (field === "productPrice" || field === "freight" || field === "priceWithShipping") {
+      if (field === "priceWithShipping") {
+        product.productPrice = moneyField(value);
+        product.freight = "";
+      } else {
+        product[field] = moneyField(value);
+      }
+      product.priceWithShipping = priceFieldsAreEmpty(product.productPrice, product.freight) ? "" : productUnitTotal(product);
       return;
     }
     if (field === "requestSizeChart") {
@@ -1655,8 +1788,12 @@
     return SIZE_KEYS.reduce((sum, size) => sum + toNumber(product.sizes[size]), 0);
   }
 
+  function productUnitTotal(product) {
+    return toNumber(product.productPrice ?? product.priceWithShipping) + toNumber(product.freight);
+  }
+
   function productTotal(product) {
-    return productUnits(product) * toNumber(product.priceWithShipping);
+    return productUnits(product) * productUnitTotal(product);
   }
 
   function quoteMetrics(quote) {
@@ -1862,6 +1999,14 @@
     if (value === null || value === undefined || value === "") return 0;
     const number = Number.parseFloat(String(value).replace(",", "."));
     return Number.isFinite(number) ? number : 0;
+  }
+
+  function moneyField(value) {
+    return value === null || value === undefined || value === "" ? "" : toNumber(value);
+  }
+
+  function priceFieldsAreEmpty(productPrice, freight) {
+    return productPrice === "" && freight === "";
   }
 
   function formatDate(value) {

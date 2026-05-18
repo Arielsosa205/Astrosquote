@@ -7,7 +7,7 @@ This folder is ready to deploy to Netlify.
 - Creates quote history: `Quote 1`, `Quote 2`, etc.
 - Opens old quotes from each signed-in user's History.
 - Supports guest links that open only one quote.
-- Saves products, prices, available sizes, available colors, size chart, quantities and totals.
+- Saves products, product prices, freight, available sizes, available colors, size chart, quantities and totals.
 - Uploads photos to Supabase Storage when online saving is configured.
 - Works in local browser storage if Supabase/Netlify Functions are not configured yet.
 
@@ -21,8 +21,10 @@ This folder is ready to deploy to Netlify.
    - Project URL
    - anon public key
    - service_role key
-6. In Authentication > URL Configuration, set the Site URL to your Netlify URL.
-7. Add your Netlify URL to Redirect URLs.
+6. In Authentication > Providers > Email, enable Email signups and password login.
+7. If you do not want confirmation emails, disable email confirmation in the Email provider settings.
+8. In Authentication > URL Configuration, set the Site URL to your Netlify URL.
+9. Add your Netlify URL to Redirect URLs.
 
 ## Netlify setup
 
@@ -47,7 +49,7 @@ Export/import them after signing in, or assign their `owner_id` manually in Supa
 ## Using the app
 
 1. Open the deployed app.
-2. Enter your email and open the sign-in link.
+2. Sign in with email and password, or keep working in Guest mode without an account.
 3. Create `New quote`.
 4. Add or paste photos.
 5. Save.
@@ -55,5 +57,6 @@ Export/import them after signing in, or assign their `owner_id` manually in Supa
 7. Use `Guest link` to share one quote without exposing the rest of the history.
 
 If the top chip says `Local mode`, the app is not connected to Supabase yet.
+If it says `Guest mode`, you are working locally without an account.
 If it says `Online saving`, it is saving to Supabase.
 If it says `Guest quote`, the visitor can access only the quote from that link.
