@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Supplier quotes</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1 data-i18n="appTitle">Supplier quotes</h1>
+      <span class="mode-chip" id="modeChip">Local mode</span>
+    </div>
+    <div class="toolbar">
+      <form class="auth-bar" id="authForm">
+        <input class="auth-email" id="authEmail" type="email" autocomplete="email" placeholder="Email" data-i18n-placeholder="emailPlaceholder">
+        <input class="auth-password" id="authPassword" type="password" autocomplete="current-password" placeholder="Password" data-i18n-placeholder="passwordPlaceholder">
+        <button class="btn" id="authSubmitBtn" type="submit" data-i18n="signIn">Sign in</button>
+        <button class="btn" id="authSignupBtn" type="button" data-i18n="createAccount">Create account</button>
+        <span class="auth-user" id="authUser"></span>
+        <button class="btn" id="authLogoutBtn" type="button" data-i18n="logout" hidden>Log out</button>
+      </form>
+      <select class="language-select" id="languageSelect" aria-label="Language" data-i18n-aria-label="language">
+        <option value="en">English</option>
+        <option value="zh">中文</option>
+      </select>
+      <button class="btn primary" id="newQuoteBtn" type="button" data-i18n="newQuote">New quote</button>
+      <button class="btn" id="historyBtn" type="button" data-i18n="history">History</button>
+      <button class="btn" id="saveQuoteBtn" type="button" data-i18n="save">Save</button>
+      <button class="btn" id="guideBtn" type="button" data-i18n="guide">Guide</button>
+      <button class="btn" id="manualBtn" type="button" data-i18n="manual">Manual</button>
+      <button class="btn" id="importBtn" type="button" data-i18n="importHtml">Import HTML</button>
+      <button class="btn" id="exportBtn" type="button" data-i18n="exportBackup">Export backup</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <section class="panel stats">
+        <div>
+          <strong id="statQuotes">0</strong>
+          <span data-i18n="quotes">Quotes</span>
+        </div>
+        <div>
+          <strong id="statProducts">0</strong>
+          <span data-i18n="products">Products</span>
+        </div>
+        <div>
+          <strong id="statPhotos">0</strong>
+          <span data-i18n="photos">Photos</span>
+        </div>
+        <div>
+          <strong id="statTotal">USD 0.00</strong>
+          <span data-i18n="total">Total</span>
+        </div>
+      </section>
+
+      <section class="panel quote-list-panel">
+        <div class="panel-head">
+          <h2 data-i18n="history">History</h2>
+          <button class="mini-btn" id="refreshBtn" type="button" data-i18n="refresh">Refresh</button>
+        </div>
+        <div class="quote-list" id="quoteList"></div>
+      </section>
+    </aside>
+
+    <section class="workspace">
+      <section class="quote-header panel">
+        <div class="field">
+          <label data-i18n="quoteName">Quote name</label>
+          <input id="quoteName" placeholder="Quote 1" data-i18n-placeholder="quoteNamePlaceholder">
+        </div>
+        <div class="field">
+          <label data-i18n="status">Status</label>
+          <select id="quoteStatus">
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="supplier">Supplier</label>
+          <input id="supplierName" placeholder="Supplier name" data-i18n-placeholder="supplierPlaceholder">
+        </div>
+        <div class="quote-actions">
+          <button class="btn primary" id="addProductBtn" type="button" data-i18n="addProduct">Add product</button>
+          <button class="btn" id="addPhotosBtn" type="button" data-i18n="photos">Photos</button>
+          <button class="btn" id="shareGuestBtn" type="button" data-i18n="guestLink">Guest link</button>
+        </div>
+      </section>
+
+      <section class="panel drop-zone" id="globalDrop" role="button" tabindex="0">
+        <span data-i18n="globalDrop">Drop, tap, or paste photos here to create a new product. Select a product first to add more photos to it.</span>
+      </section>
+
+      <section class="product-list" id="productList"></section>
+      <section class="empty" id="emptyState" data-i18n="emptyState">Create a quote or add product photos to start.</section>
+    </section>
+  </main>
+
+  <input class="hidden-input" id="imageInput" type="file" accept="image/*" multiple>
+  <input class="hidden-input" id="importInput" type="file" accept=".html,.json,text/html,application/json">
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image preview" data-i18n-aria-label="imagePreview">
+    <div class="lightbox-top">
+      <div id="lightboxTitle" data-i18n="imagePreview">Image preview</div>
+      <button class="lightbox-close" id="lightboxClose" type="button">x</button>
+    </div>
+    <div class="lightbox-stage" id="lightboxStage">
+      <button class="lightbox-nav prev" id="lightboxPrev" type="button">‹</button>
+      <img id="lightboxImage" alt="">
+      <button class="lightbox-nav next" id="lightboxNext" type="button">›</button>
+    </div>
+    <div class="lightbox-bottom" id="lightboxCounter">1 / 1</div>
+  </div>
+
+  <div class="tour-layer" id="tourLayer" hidden>
+    <section class="tour-card" id="tourCard" role="dialog" aria-live="polite" aria-label="App guide" data-i18n-aria-label="guide">
+      <div class="tour-progress" id="tourProgress"></div>
+      <h2 id="tourTitle"></h2>
+      <p id="tourBody"></p>
+      <div class="tour-actions">
+        <button class="mini-btn" id="tourSkipBtn" type="button" data-i18n="skip">Skip</button>
+        <button class="mini-btn" id="tourPrevBtn" type="button" data-i18n="back">Back</button>
+        <button class="btn primary" id="tourNextBtn" type="button" data-i18n="next">Next</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="manual-modal" id="manualModal" role="dialog" aria-modal="true" aria-label="Manual" data-i18n-aria-label="manual" hidden>
+    <section class="manual-panel">
+      <div class="manual-head">
+        <h2 data-i18n="manual">Manual</h2>
+        <button class="lightbox-close" id="manualCloseBtn" type="button">x</button>
+      </div>
+      <div class="manual-tabs" role="tablist">
+        <button class="mini-btn" id="manualEnglishBtn" type="button">English</button>
+        <button class="mini-btn" id="manualChineseBtn" type="button">中文</button>
+      </div>
+      <div class="manual-content" id="manualContent"></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
