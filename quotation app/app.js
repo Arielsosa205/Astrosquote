@@ -97,10 +97,14 @@
       imagePreview: "Image preview",
       importError: "Could not import that file",
       importNotStoredLocal: "Imported, but too large for local browser storage. Sign in and save online before closing.",
+      importingLargeOnline: "Large quote imported. Saving online...",
+      importedSavedOnline: "Imported and saved online",
       openError: "Could not open quote",
       savedOnline: "Quote saved online",
       saveOnlineError: "Could not save online. Kept locally.",
+      saveOnlineAndLocalError: "Could not save online, and this quote is too large for local browser storage.",
       savedLocal: "Quote saved locally",
+      saveLocalError: "Quote is too large for local browser storage. Sign in and save online.",
       photoAddedTo: "Photos added to",
       productCreated: "Product created",
       productWithMultiplePhotos: "Product with multiple photos",
@@ -204,10 +208,14 @@
       imagePreview: "图片预览",
       importError: "无法导入该文件",
       importNotStoredLocal: "Imported, but too large for local browser storage. Sign in and save online before closing.",
+      importingLargeOnline: "Large quote imported. Saving online...",
+      importedSavedOnline: "Imported and saved online",
       openError: "无法打开报价",
       savedOnline: "报价已在线保存",
       saveOnlineError: "无法在线保存，已保存在本地。",
+      saveOnlineAndLocalError: "Could not save online, and this quote is too large for local browser storage.",
       savedLocal: "报价已保存在本地",
+      saveLocalError: "Quote is too large for local browser storage. Sign in and save online.",
       photoAddedTo: "图片已添加到",
       productCreated: "产品已创建",
       productWithMultiplePhotos: "多图产品",
@@ -1102,15 +1110,37 @@
   function persistLocal() {
     if (state.guestToken) return true;
     try {
-      localStorage.setItem(localKey(), JSON.stringify({
-        quotes: state.quotes,
-        currentQuoteId: state.currentQuoteId
-      }));
+      localStorage.setItem(localKey(), JSON.stringify(localPayload(false)));
       return true;
     } catch (error) {
       console.warn(error);
+      try {
+        localStorage.setItem(localKey(), JSON.stringify(localPayload(true)));
+      } catch (fallbackError) {
+        console.warn(fallbackError);
+      }
       return false;
     }
+  }
+
+  function localPayload(lightweight) {
+    return {
+      quotes: state.quotes.map((quote) => lightweight ? quoteSummaryForLocal(quote) : quote),
+      currentQuoteId: state.currentQuoteId
+    };
+  }
+
+  function quoteSummaryForLocal(quote) {
+    return normalizeQuote({
+      id: quote.id,
+      name: quote.name,
+      status: quote.status,
+      supplierName: quote.supplierName,
+      guestToken: quote.guestToken,
+      products: [],
+      createdAt: quote.createdAt,
+      updatedAt: quote.updatedAt
+    });
   }
 
   function localKey() {
@@ -1217,8 +1247,8 @@
         return saved;
       } catch (error) {
         console.warn(error);
-        showToast(t("saveOnlineError"));
-        persistLocal();
+        const stored = persistLocal();
+        showToast(stored ? t("saveOnlineError") : t("saveOnlineAndLocalError"), 5200);
         return null;
       } finally {
         els.saveQuoteBtn.textContent = t("save");
@@ -1227,9 +1257,9 @@
     }
 
     state.dirty = false;
-    persistLocal();
+    const stored = persistLocal();
     render();
-    showToast(t("savedLocal"));
+    showToast(stored ? t("savedLocal") : t("saveLocalError"), stored ? 1800 : 5200);
     return quote;
   }
 
@@ -1251,6 +1281,10 @@
     } catch (error) {
       window.prompt(t("guestLinkPrompt"), url);
     }
+  }
+
+  function canSaveOnline() {
+    return Boolean(state.cloud && state.user && !state.guestToken);
   }
 
   async function quoteWithUploadedImages(quote) {
@@ -1883,7 +1917,13 @@
     const stored = persistLocal();
     markDirty({ persist: false });
     render();
-    showToast(stored ? t("importedAsQuote") : t("importNotStoredLocal"));
+    if (canSaveOnline()) {
+      showToast(stored ? t("saving") : t("importingLargeOnline"), 4200);
+      const saved = await saveQuote();
+      showToast(saved ? t("importedSavedOnline") : (stored ? t("importedAsQuote") : t("importNotStoredLocal")), saved ? 2400 : 5200);
+      return;
+    }
+    showToast(stored ? t("importedAsQuote") : t("importNotStoredLocal"), stored ? 1800 : 5200);
   }
 
   function extractBootstrapData(html) {

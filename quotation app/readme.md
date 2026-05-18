@@ -9,6 +9,7 @@ This folder is ready to deploy to Netlify.
 - Supports guest links that open only one quote.
 - Saves products, product prices, freight, available sizes, available colors, size chart, quantities and totals.
 - Uploads photos to Supabase Storage when online saving is configured.
+- Large imported quotes are saved online automatically when the user is signed in, so browser storage limits do not eat the quote.
 - Works in local browser storage if Supabase/Netlify Functions are not configured yet.
 
 ## Supabase setup
@@ -66,3 +67,5 @@ If the top chip says `Local mode`, the app is not connected to Supabase yet.
 If it says `Guest mode`, you are working locally without an account.
 If it says `Online saving`, it is saving to Supabase.
 If it says `Guest quote`, the visitor can access only the quote from that link.
+
+For large quotes with many photos, sign in and use online saving. The app uploads images to Supabase Storage and stores only image URLs in the quote data.
