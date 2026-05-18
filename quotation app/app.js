@@ -31,6 +31,8 @@
       next: "Next",
       done: "Done",
       importHtml: "Import HTML",
+      exportHtml: "Export HTML",
+      printPdf: "Print / PDF",
       exportBackup: "Export backup",
       quotes: "Quotes",
       products: "Products",
@@ -106,6 +108,9 @@
       deleteConfirmFallback: "this product",
       copySuffix: "copy",
       importedAsQuote: "Imported as quote",
+      exportedHtml: "HTML exported",
+      printViewOpened: "Print view opened",
+      printViewBlocked: "Could not open print view",
       importedPrefix: "Imported",
       quotePrefix: "Quote",
       statusDraft: "Draft",
@@ -133,6 +138,8 @@
       next: "下一步",
       done: "完成",
       importHtml: "导入 HTML",
+      exportHtml: "Export HTML",
+      printPdf: "Print / PDF",
       exportBackup: "导出备份",
       quotes: "报价",
       products: "产品",
@@ -208,6 +215,9 @@
       deleteConfirmFallback: "这个产品",
       copySuffix: "副本",
       importedAsQuote: "已导入为报价",
+      exportedHtml: "HTML exported",
+      printViewOpened: "Print view opened",
+      printViewBlocked: "Could not open print view",
       importedPrefix: "已导入",
       quotePrefix: "报价",
       statusDraft: "草稿",
@@ -382,6 +392,8 @@
     guideBtn: document.getElementById("guideBtn"),
     manualBtn: document.getElementById("manualBtn"),
     importBtn: document.getElementById("importBtn"),
+    exportHtmlBtn: document.getElementById("exportHtmlBtn"),
+    printPdfBtn: document.getElementById("printPdfBtn"),
     exportBtn: document.getElementById("exportBtn"),
     refreshBtn: document.getElementById("refreshBtn"),
     addProductBtn: document.getElementById("addProductBtn"),
@@ -507,6 +519,8 @@
     });
     els.refreshBtn.addEventListener("click", loadAndRender);
     els.importBtn.addEventListener("click", () => els.importInput.click());
+    els.exportHtmlBtn.addEventListener("click", exportCurrentHtml);
+    els.printPdfBtn.addEventListener("click", printCurrentQuote);
     els.exportBtn.addEventListener("click", exportBackup);
     els.addProductBtn.addEventListener("click", () => {
       const quote = currentQuote();
@@ -1889,9 +1903,156 @@
     return textarea.value;
   }
 
+  function exportCurrentHtml() {
+    const quote = currentQuote();
+    if (!quote) return;
+    const html = quoteHtmlDocument(quote);
+    downloadBlob(html, `${safeFileName(quote.name || t("quotePrefix"))}-${dateStamp()}.html`, "text/html");
+    showToast(t("exportedHtml"));
+  }
+
+  function printCurrentQuote() {
+    const quote = currentQuote();
+    if (!quote) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      showToast(t("printViewBlocked"), 4200);
+      return;
+    }
+    printWindow.document.open();
+    printWindow.document.write(quoteHtmlDocument(quote, { autoPrint: true }));
+    printWindow.document.close();
+    showToast(t("printViewOpened"));
+  }
+
   function exportBackup() {
     const payload = JSON.stringify({ quotes: state.quotes }, null, 2);
     downloadBlob(payload, `supplier-quotes-backup-${dateStamp()}.json`, "application/json");
+  }
+
+  function quoteHtmlDocument(quote, options = {}) {
+    const metrics = quoteMetrics(quote);
+    const bootstrap = JSON.stringify(normalizeQuote(JSON.parse(JSON.stringify(quote)))).replace(/</g, "\\u003c");
+    const products = quote.products.map((product) => productHtmlSection(product)).join("");
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(quote.name || t("untitledQuote"))}</title>
+  <style>
+    :root { color-scheme: light; --ink:#172033; --muted:#667085; --line:#d7dee8; --soft:#f6f8fb; --accent:#0f766e; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: #eef2f6; font: 13px/1.45 Arial, Helvetica, sans-serif; }
+    main { max-width: 1120px; margin: 0 auto; padding: 24px; }
+    header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: start; margin-bottom: 18px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 26px; line-height: 1.12; }
+    h2 { font-size: 16px; }
+    h3 { font-size: 14px; }
+    .muted { color: var(--muted); }
+    .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 16px 0; }
+    .box, .product { border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    .box { padding: 10px; }
+    .box strong { display: block; font-size: 18px; }
+    .product { margin-top: 12px; overflow: hidden; break-inside: avoid; page-break-inside: avoid; }
+    .product-head { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 10px; border-bottom: 1px solid var(--line); background: var(--soft); }
+    .code { font-weight: 800; text-align: center; padding: 7px; border: 1px solid var(--line); border-radius: 6px; background: #eaf6ef; }
+    .status { color: var(--muted); font-weight: 700; }
+    .product-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 12px; padding: 10px; }
+    .photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-content: start; }
+    .photos img { width: 100%; aspect-ratio: 1 / 1.08; object-fit: cover; border: 1px solid var(--line); border-radius: 6px; }
+    .fields { display: grid; gap: 10px; }
+    .money { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+    .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .label { color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    .value { margin-top: 2px; font-weight: 700; word-break: break-word; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid var(--line); padding: 6px; text-align: center; }
+    th { background: var(--soft); color: var(--muted); font-size: 11px; }
+    .total-line { margin-top: 18px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; text-align: right; }
+    .total-line strong { font-size: 22px; }
+    @media (max-width: 760px) {
+      main { padding: 12px; }
+      header, .product-body, .summary, .money, .field-grid { grid-template-columns: 1fr; }
+      .photos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media print {
+      body { background: #fff; }
+      main { max-width: none; padding: 0; }
+      .product { break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>${escapeHtml(quote.name || t("untitledQuote"))}</h1>
+        <p class="muted">${escapeHtml(statusLabel(quote.status))} / ${escapeHtml(formatDate(quote.updatedAt || quote.createdAt))}</p>
+      </div>
+      <div>
+        <div class="label">${escapeHtml(t("supplier"))}</div>
+        <div class="value">${escapeHtml(quote.supplierName || "-")}</div>
+      </div>
+    </header>
+    <section class="summary">
+      <div class="box"><strong>${metrics.products}</strong><span class="muted">${escapeHtml(t("products"))}</span></div>
+      <div class="box"><strong>${metrics.photos}</strong><span class="muted">${escapeHtml(t("photos"))}</span></div>
+      <div class="box"><strong>${metrics.units}</strong><span class="muted">${escapeHtml(t("units"))}</span></div>
+      <div class="box"><strong>${formatMoney(metrics.total)}</strong><span class="muted">${escapeHtml(t("total"))}</span></div>
+    </section>
+    ${products || `<p class="muted">${escapeHtml(t("emptyState"))}</p>`}
+    <section class="total-line">
+      <div class="label">${escapeHtml(t("total"))}</div>
+      <strong>${formatMoney(metrics.total)}</strong>
+    </section>
+  </main>
+  <script type="application/json" id="bootstrap-data">${bootstrap}</script>
+  ${options.autoPrint ? "<script>window.addEventListener('load',function(){setTimeout(function(){window.print();},350);});</script>" : ""}
+</body>
+</html>`;
+  }
+
+  function productHtmlSection(product) {
+    const images = product.images.map((image) => `<img src="${escapeAttr(image.src)}" alt="${escapeAttr(image.name || product.code)}">`).join("");
+    const sizes = SIZE_KEYS.map((size) => `<td>${toNumber(product.sizes[size])}</td>`).join("");
+    const sizeHeads = SIZE_KEYS.map((size) => `<th>${escapeHtml(size)}</th>`).join("");
+    return `<article class="product">
+      <div class="product-head">
+        <div class="code">${escapeHtml(product.code)}</div>
+        <div>
+          <h2>${escapeHtml(product.name || t("shortDescription"))}</h2>
+          <div class="status">${escapeHtml(statusLabel(product.status))}</div>
+        </div>
+        <strong>${formatMoney(productTotal(product))}</strong>
+      </div>
+      <div class="product-body">
+        <div class="photos">${images || `<div class="muted">${escapeHtml(t("photos"))}: 0</div>`}</div>
+        <div class="fields">
+          <div class="money">
+            ${htmlField(t("productPrice"), formatMoney(product.productPrice))}
+            ${htmlField(t("freight"), formatMoney(product.freight))}
+            ${htmlField(t("unitTotal"), formatMoney(productUnitTotal(product)))}
+            ${htmlField(t("units"), productUnits(product))}
+            ${htmlField(t("total"), formatMoney(productTotal(product)))}
+          </div>
+          <div class="field-grid">
+            ${htmlField(t("availableSizes"), product.availableSizes || "-")}
+            ${htmlField(t("availableColors"), product.availableColors || "-")}
+          </div>
+          ${htmlField(t("measurements"), product.sizeChart || "-")}
+          <table>
+            <thead><tr>${sizeHeads}</tr></thead>
+            <tbody><tr>${sizes}</tr></tbody>
+          </table>
+        </div>
+      </div>
+    </article>`;
+  }
+
+  function htmlField(label, value) {
+    return `<div><div class="label">${escapeHtml(label)}</div><div class="value">${escapeHtml(value)}</div></div>`;
   }
 
   function setupDrop(target, callback, highlightTarget = target) {
@@ -2031,6 +2192,15 @@
   function dateStamp() {
     const now = new Date();
     return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
+  }
+
+  function safeFileName(value) {
+    return String(value || "quote")
+      .trim()
+      .replace(/[\\/:*?"<>|]+/g, "-")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 80) || "quote";
   }
 
   function downloadBlob(content, filename, type) {
