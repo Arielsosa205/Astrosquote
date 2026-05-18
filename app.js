@@ -55,6 +55,7 @@
       accountCreated: "Account created",
       accountCreatedCheckEmail: "Account created, but Supabase still requires email confirmation.",
       signupError: "Could not create account",
+      passwordTooShort: "Password must have at least 6 characters",
       signedOut: "Signed out",
       authRequired: "Sign in to save online history",
       guestMode: "Guest quote",
@@ -155,6 +156,7 @@
       accountCreated: "Account created",
       accountCreatedCheckEmail: "Account created, but Supabase still requires email confirmation.",
       signupError: "Could not create account",
+      passwordTooShort: "密码至少需要 6 个字符",
       signedOut: "Signed out",
       authRequired: "Sign in to save online history",
       guestMode: "Guest quote",
@@ -726,7 +728,7 @@
       showToast(t("loginSuccess"));
     } catch (error) {
       console.warn(error);
-      showToast(error.message ? `${t("loginError")}: ${error.message}` : t("loginError"));
+      showToast(error.message ? `${t("loginError")}: ${error.message}` : t("loginError"), 4800);
     } finally {
       els.authSubmitBtn.textContent = t("signIn");
       els.authSubmitBtn.disabled = false;
@@ -762,7 +764,7 @@
       }
     } catch (error) {
       console.warn(error);
-      showToast(error.message ? `${t("signupError")}: ${error.message}` : t("signupError"));
+      showToast(error.message ? `${t("signupError")}: ${error.message}` : t("signupError"), 4800);
     } finally {
       els.authSignupBtn.textContent = t("createAccount");
       els.authSubmitBtn.disabled = false;
@@ -776,6 +778,11 @@
       return false;
     }
     if (!password) {
+      els.authPassword.focus();
+      return false;
+    }
+    if (password.length < 6) {
+      showToast(t("passwordTooShort"), 4200);
       els.authPassword.focus();
       return false;
     }
@@ -867,7 +874,7 @@
     const text = await response.text();
     try {
       const payload = JSON.parse(text);
-      return payload.msg || payload.error_description || payload.error || text || response.statusText;
+      return payload.message || payload.msg || payload.error_description || payload.error || text || response.statusText;
     } catch (error) {
       return text || response.statusText;
     }
@@ -2035,11 +2042,11 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  function showToast(message) {
+  function showToast(message, duration = 1800) {
     clearTimeout(showToast.timer);
     els.toast.textContent = message;
     els.toast.classList.add("show");
-    showToast.timer = setTimeout(() => els.toast.classList.remove("show"), 1800);
+    showToast.timer = setTimeout(() => els.toast.classList.remove("show"), duration);
   }
 
   function escapeHtml(value) {
