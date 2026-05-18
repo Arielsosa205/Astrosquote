@@ -99,6 +99,7 @@
       importNotStoredLocal: "Imported, but too large for local browser storage. Sign in and save online before closing.",
       importingLargeOnline: "Large quote imported. Saving online...",
       importedSavedOnline: "Imported and saved online",
+      preparingExport: "Preparing export...",
       openError: "Could not open quote",
       savedOnline: "Quote saved online",
       saveOnlineError: "Could not save online. Kept locally.",
@@ -210,6 +211,7 @@
       importNotStoredLocal: "Imported, but too large for local browser storage. Sign in and save online before closing.",
       importingLargeOnline: "Large quote imported. Saving online...",
       importedSavedOnline: "Imported and saved online",
+      preparingExport: "Preparing export...",
       openError: "无法打开报价",
       savedOnline: "报价已在线保存",
       saveOnlineError: "无法在线保存，已保存在本地。",
@@ -1943,15 +1945,17 @@
     return textarea.value;
   }
 
-  function exportCurrentHtml() {
+  async function exportCurrentHtml() {
     const quote = currentQuote();
     if (!quote) return;
-    const html = quoteHtmlDocument(quote);
+    showToast(t("preparingExport"), 4200);
+    const exportQuote = await quoteForHtmlExport(quote);
+    const html = quoteHtmlDocument(exportQuote);
     downloadBlob(html, `${safeFileName(quote.name || t("quotePrefix"))}-${dateStamp()}.html`, "text/html");
     showToast(t("exportedHtml"));
   }
 
-  function printCurrentQuote() {
+  async function printCurrentQuote() {
     const quote = currentQuote();
     if (!quote) return;
     const printWindow = window.open("", "_blank");
@@ -1960,7 +1964,11 @@
       return;
     }
     printWindow.document.open();
-    printWindow.document.write(quoteHtmlDocument(quote, { autoPrint: true }));
+    printWindow.document.write(`<!doctype html><html><head><title>${escapeHtml(t("preparingExport"))}</title></head><body style="font-family:Arial,sans-serif;padding:24px;">${escapeHtml(t("preparingExport"))}</body></html>`);
+    printWindow.document.close();
+    const exportQuote = await quoteForHtmlExport(quote);
+    printWindow.document.open();
+    printWindow.document.write(quoteHtmlDocument(exportQuote, { autoPrint: true }));
     printWindow.document.close();
     showToast(t("printViewOpened"));
   }
@@ -2093,6 +2101,39 @@
 
   function htmlField(label, value) {
     return `<div><div class="label">${escapeHtml(label)}</div><div class="value">${escapeHtml(value)}</div></div>`;
+  }
+
+  async function quoteForHtmlExport(quote) {
+    const copy = normalizeQuote(JSON.parse(JSON.stringify(quote)));
+    for (const product of copy.products) {
+      for (const image of product.images) {
+        image.src = await imageSourceForHtmlExport(image.src);
+      }
+    }
+    return copy;
+  }
+
+  async function imageSourceForHtmlExport(src) {
+    if (!src || src.startsWith("data:image/")) return src;
+    try {
+      const response = await fetch(src, { mode: "cors" });
+      if (!response.ok) throw new Error("Image fetch failed");
+      const blob = await response.blob();
+      if (!blob.type.startsWith("image/")) return src;
+      return blobToDataUrl(blob);
+    } catch (error) {
+      console.warn(error);
+      return src;
+    }
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   function setupDrop(target, callback, highlightTarget = target) {
