@@ -10,6 +10,9 @@
   const SIZE_KEYS = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"];
   const QUOTE_STATUSES = ["Draft", "Sent", "Quoted", "Confirmed", "Archived"];
   const PRODUCT_STATUSES = ["To quote", "Quoted", "Confirmed", "Discarded"];
+  const IMAGE_MAX_SIZE = 1400;
+  const IMAGE_IMPORT_MAX_SIZE = 1100;
+  const IMAGE_WEBP_QUALITY = .78;
   const I18N = {
     en: {
       appTitle: "Supplier quotes",
@@ -79,7 +82,7 @@
       units: "Units",
       imagePreview: "Image preview",
       importError: "Could not import that file",
-      importNotStoredLocal: "Imported, but too large for local browser storage. Save online before closing.",
+      importNotStoredLocal: "Imported, but too large for local browser storage. Sign in and save online before closing.",
       openError: "Could not open quote",
       savedOnline: "Quote saved online",
       saveOnlineError: "Could not save online. Kept locally.",
@@ -169,7 +172,7 @@
       units: "件数",
       imagePreview: "图片预览",
       importError: "无法导入该文件",
-      importNotStoredLocal: "Imported, but too large for local browser storage. Save online before closing.",
+      importNotStoredLocal: "Imported, but too large for local browser storage. Sign in and save online before closing.",
       openError: "无法打开报价",
       savedOnline: "报价已在线保存",
       saveOnlineError: "无法在线保存，已保存在本地。",
@@ -681,6 +684,7 @@
       els.authEmail.focus();
       return;
     }
+    if (!state.authConfig.configured) await loadAuthConfig();
     if (!state.authConfig.configured) {
       showToast(t("loginError"));
       return;
@@ -815,7 +819,7 @@
   function updateAuthUI() {
     const isGuest = Boolean(state.guestToken);
     const isSignedIn = Boolean(state.user && !isGuest);
-    els.authForm.hidden = !state.authConfig.configured && !isGuest;
+    els.authForm.hidden = isGuest;
     els.authEmail.hidden = isGuest || isSignedIn;
     els.authSubmitBtn.hidden = isGuest || isSignedIn;
     els.authUser.textContent = isGuest ? t("guestMode") : (isSignedIn ? state.user.email : "");
@@ -1128,13 +1132,44 @@
     for (const product of copy.products) {
       for (const image of product.images) {
         if (image.src && image.src.startsWith("data:")) {
-          const uploaded = await uploadDataUrl(image.src, image.name);
+          const compressed = await compressDataUrlForUpload(image.src);
+          image.name = imageFilename(image.name, compressed);
+          const uploaded = await uploadDataUrl(compressed, image.name);
           image.src = uploaded.url;
           image.storagePath = uploaded.path;
         }
       }
     }
     return copy;
+  }
+
+  async function compressQuoteImages(quote, maxSize = IMAGE_IMPORT_MAX_SIZE) {
+    for (const product of quote.products) {
+      for (const image of product.images) {
+        if (!image.src || !image.src.startsWith("data:image/")) continue;
+        try {
+          const compressed = await compressImageSource(image.src, maxSize, IMAGE_WEBP_QUALITY);
+          if (compressed.length < image.src.length || !image.src.startsWith("data:image/webp")) {
+            image.src = compressed;
+            image.name = imageFilename(image.name, compressed);
+          }
+        } catch (error) {
+          console.warn(error);
+        }
+      }
+    }
+    return quote;
+  }
+
+  async function compressDataUrlForUpload(dataUrl) {
+    if (!dataUrl.startsWith("data:image/")) return dataUrl;
+    try {
+      const compressed = await compressImageSource(dataUrl, IMAGE_MAX_SIZE, IMAGE_WEBP_QUALITY);
+      return compressed.length < dataUrl.length || !dataUrl.startsWith("data:image/webp") ? compressed : dataUrl;
+    } catch (error) {
+      console.warn(error);
+      return dataUrl;
+    }
   }
 
   async function uploadDataUrl(dataUrl, filename) {
@@ -1365,16 +1400,15 @@
   }
 
   async function fileToImage(file) {
-    const src = await resizeImage(file, 1400, .84);
-    return { id: makeId("img"), name: file.name || "photo.jpg", src };
+    const src = await compressImageSource(file, IMAGE_MAX_SIZE, IMAGE_WEBP_QUALITY);
+    return { id: makeId("img"), name: imageFilename(file.name || "photo", src), src };
   }
 
-  function resizeImage(file, maxSize, quality) {
+  function compressImageSource(source, maxSize, quality) {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const image = new Image();
-        image.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        try {
           const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
           const width = Math.max(1, Math.round(image.width * scale));
           const height = Math.max(1, Math.round(image.height * scale));
@@ -1383,14 +1417,28 @@
           canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx.drawImage(image, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", quality));
-        };
-        image.onerror = reject;
-        image.src = reader.result;
+          resolve(canvasToCompressedDataUrl(canvas, quality));
+        } catch (error) {
+          reject(error);
+        } finally {
+          if (image.src.startsWith("blob:")) URL.revokeObjectURL(image.src);
+        }
       };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+      image.onerror = reject;
+      image.src = typeof source === "string" ? source : URL.createObjectURL(source);
     });
+  }
+
+  function canvasToCompressedDataUrl(canvas, quality) {
+    const webp = canvas.toDataURL("image/webp", quality);
+    if (webp.startsWith("data:image/webp")) return webp;
+    return canvas.toDataURL("image/jpeg", .82);
+  }
+
+  function imageFilename(name, dataUrl) {
+    const extension = dataUrl.startsWith("data:image/webp") ? "webp" : "jpg";
+    const base = String(name || "photo").replace(/\.[a-z0-9]{2,5}$/i, "") || "photo";
+    return `${base}.${extension}`;
   }
 
   function createQuote() {
@@ -1654,6 +1702,7 @@
     let quote;
     if (Array.isArray(payload.quotes)) {
       const importedQuotes = payload.quotes.map(normalizeQuote);
+      for (const importedQuote of importedQuotes) await compressQuoteImages(importedQuote);
       state.quotes.unshift(...importedQuotes);
       quote = importedQuotes[0];
     } else {
@@ -1666,11 +1715,12 @@
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
+      await compressQuoteImages(quote);
       state.quotes.unshift(quote);
     }
     state.currentQuoteId = quote.id;
-    markDirty();
     const stored = persistLocal();
+    markDirty({ persist: false });
     render();
     showToast(stored ? t("importedAsQuote") : t("importNotStoredLocal"));
   }
@@ -1789,11 +1839,11 @@
     els.lightboxNext.hidden = !hasMultiple;
   }
 
-  function markDirty() {
+  function markDirty(options = {}) {
     const quote = currentQuote();
     if (quote) quote.updatedAt = new Date().toISOString();
     state.dirty = true;
-    persistLocal();
+    if (options.persist !== false) persistLocal();
   }
 
   function makeId(prefix) {
