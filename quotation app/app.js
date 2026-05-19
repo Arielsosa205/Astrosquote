@@ -13,6 +13,8 @@
   const IMAGE_MAX_SIZE = 1400;
   const IMAGE_IMPORT_MAX_SIZE = 1100;
   const IMAGE_WEBP_QUALITY = .78;
+  const IMAGE_PROCESS_CONCURRENCY = 3;
+  const IMAGE_UPLOAD_CONCURRENCY = 4;
   const I18N = {
     en: {
       appTitle: "Supplier quotes",
@@ -24,6 +26,8 @@
       history: "History",
       save: "Save",
       saving: "Saving...",
+      preparingImages: "Preparing images...",
+      uploadingPhotos: "Uploading photos",
       guide: "Guide",
       manual: "Manual",
       skip: "Skip",
@@ -136,6 +140,8 @@
       history: "历史记录",
       save: "保存",
       saving: "保存中...",
+      preparingImages: "Preparing images...",
+      uploadingPhotos: "Uploading photos",
       guide: "指南",
       manual: "手册",
       skip: "跳过",
@@ -474,6 +480,13 @@
     await loadUser();
     updateAuthUI();
     await loadQuotes();
+    if (!state.quotes.length && !state.guestToken) {
+      const quote = createQuote();
+      state.quotes.push(quote);
+      state.currentQuoteId = quote.id;
+      persistLocal();
+    }
+    if (!state.currentQuoteId && state.quotes[0]) state.currentQuoteId = state.quotes[0].id;
     render();
   }
 
@@ -1083,20 +1096,8 @@
       state.cloud = false;
     }
 
-    ensureActiveQuote();
     updateModeChip();
     updateAuthUI();
-  }
-
-  function ensureActiveQuote() {
-    if (!state.quotes.length && !state.guestToken) {
-      const quote = createQuote();
-      state.quotes.push(quote);
-      state.currentQuoteId = quote.id;
-      persistLocal();
-      return;
-    }
-    if (!state.currentQuoteId && state.quotes[0]) state.currentQuoteId = state.quotes[0].id;
   }
 
   function loadLocal() {
@@ -1296,24 +1297,38 @@
 
   async function quoteWithUploadedImages(quote) {
     const copy = normalizeQuote(JSON.parse(JSON.stringify(quote)));
-    for (const product of copy.products) {
-      for (const image of product.images) {
-        if (image.src && image.src.startsWith("data:")) {
-          const compressed = await compressDataUrlForUpload(image.src);
-          image.name = imageFilename(image.name, compressed);
-          const uploaded = await uploadDataUrl(compressed, image.name);
-          image.src = uploaded.url;
-          image.storagePath = uploaded.path;
-        }
-      }
-    }
+    const pending = [];
+    copy.products.forEach((product) => {
+      product.images.forEach((image) => {
+        if (shouldUploadImage(image)) pending.push(image);
+      });
+    });
+    let completed = 0;
+    updateSaveProgress(completed, pending.length);
+    await parallelMap(pending, IMAGE_UPLOAD_CONCURRENCY, async (image) => {
+      const compressed = await compressDataUrlForUpload(image.src);
+      image.name = imageFilename(image.name, compressed);
+      const uploaded = await uploadDataUrl(compressed, image.name);
+      image.src = uploaded.url;
+      image.storagePath = uploaded.path;
+      completed += 1;
+      updateSaveProgress(completed, pending.length);
+    });
     return copy;
   }
 
+  function shouldUploadImage(image) {
+    return Boolean(image?.src && image.src.startsWith("data:image/"));
+  }
+
   async function compressQuoteImages(quote, maxSize = IMAGE_IMPORT_MAX_SIZE) {
+    const pending = [];
     for (const product of quote.products) {
       for (const image of product.images) {
-        if (!image.src || !image.src.startsWith("data:image/")) continue;
+        if (image.src?.startsWith("data:image/")) pending.push(image);
+      }
+    }
+    await parallelMap(pending, IMAGE_PROCESS_CONCURRENCY, async (image) => {
         try {
           const compressed = await compressImageSource(image.src, maxSize, IMAGE_WEBP_QUALITY);
           if (compressed.length < image.src.length || !image.src.startsWith("data:image/webp")) {
@@ -1323,13 +1338,13 @@
         } catch (error) {
           console.warn(error);
         }
-      }
-    }
+    });
     return quote;
   }
 
   async function compressDataUrlForUpload(dataUrl) {
     if (!dataUrl.startsWith("data:image/")) return dataUrl;
+    if (dataUrl.startsWith("data:image/webp")) return dataUrl;
     try {
       const compressed = await compressImageSource(dataUrl, IMAGE_MAX_SIZE, IMAGE_WEBP_QUALITY);
       return compressed.length < dataUrl.length || !dataUrl.startsWith("data:image/webp") ? compressed : dataUrl;
@@ -1353,6 +1368,25 @@
     });
     if (!response.ok) throw new Error(await response.text());
     return response.json();
+  }
+
+  function updateSaveProgress(done, total) {
+    if (!total) {
+      els.saveQuoteBtn.textContent = t("saving");
+      return;
+    }
+    els.saveQuoteBtn.textContent = `${t("uploadingPhotos")} ${done}/${total}`;
+  }
+
+  async function parallelMap(items, concurrency, worker) {
+    const queue = [...items];
+    const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
+      while (queue.length) {
+        const item = queue.shift();
+        await worker(item);
+      }
+    });
+    await Promise.all(workers);
   }
 
   function replaceQuote(quote) {
@@ -1568,6 +1602,7 @@
       quote.products.unshift(product);
     }
     state.pasteTargetProductId = product.id;
+    showToast(t("preparingImages"), 4200);
     await appendFiles(product, imageFiles);
     markDirty();
     render();
@@ -1575,10 +1610,7 @@
   }
 
   async function appendFiles(product, files) {
-    const images = [];
-    for (const file of files.filter(isImageFile)) {
-      images.push(await fileToImage(file));
-    }
+    const images = await parallelMapResults(files.filter(isImageFile), IMAGE_PROCESS_CONCURRENCY, fileToImage);
     product.images.push(...images);
   }
 
@@ -1622,6 +1654,20 @@
     const extension = dataUrl.startsWith("data:image/webp") ? "webp" : "jpg";
     const base = String(name || "photo").replace(/\.[a-z0-9]{2,5}$/i, "") || "photo";
     return `${base}.${extension}`;
+  }
+
+  async function parallelMapResults(items, concurrency, worker) {
+    const results = new Array(items.length);
+    let index = 0;
+    const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+      while (index < items.length) {
+        const current = index;
+        index += 1;
+        results[current] = await worker(items[current], current);
+      }
+    });
+    await Promise.all(workers);
+    return results;
   }
 
   function createQuote() {

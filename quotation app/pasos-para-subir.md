@@ -94,6 +94,7 @@ Si dice:
 significa que todavia no esta conectada a Supabase.
 
 Para presupuestos grandes con muchas fotos, trabajar logueado. La app sube las imagenes a Supabase Storage y guarda en el presupuesto solo las URLs, asi no depende del limite del navegador.
+Las fotos nuevas se convierten a WebP cuando se agregan y, al guardar, las imagenes pendientes se suben en paralelo con progreso.
 
 ## 5. Flujo de uso
 

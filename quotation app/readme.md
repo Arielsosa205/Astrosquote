@@ -9,6 +9,7 @@ This folder is ready to deploy to Netlify.
 - Supports guest links that open only one quote.
 - Saves products, product prices, freight, available sizes, available colors, size chart, quantities and totals.
 - Uploads photos to Supabase Storage when online saving is configured.
+- Converts new photos to WebP as they are added, then uploads pending images in parallel with progress on save.
 - Large imported quotes are saved online automatically when the user is signed in, so browser storage limits do not eat the quote.
 - Works in local browser storage if Supabase/Netlify Functions are not configured yet.
 
