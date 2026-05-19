@@ -474,13 +474,6 @@
     await loadUser();
     updateAuthUI();
     await loadQuotes();
-    if (!state.quotes.length && !state.guestToken) {
-      const quote = createQuote();
-      state.quotes.push(quote);
-      state.currentQuoteId = quote.id;
-      persistLocal();
-    }
-    if (!state.currentQuoteId && state.quotes[0]) state.currentQuoteId = state.quotes[0].id;
     render();
   }
 
@@ -1090,8 +1083,20 @@
       state.cloud = false;
     }
 
+    ensureActiveQuote();
     updateModeChip();
     updateAuthUI();
+  }
+
+  function ensureActiveQuote() {
+    if (!state.quotes.length && !state.guestToken) {
+      const quote = createQuote();
+      state.quotes.push(quote);
+      state.currentQuoteId = quote.id;
+      persistLocal();
+      return;
+    }
+    if (!state.currentQuoteId && state.quotes[0]) state.currentQuoteId = state.quotes[0].id;
   }
 
   function loadLocal() {
