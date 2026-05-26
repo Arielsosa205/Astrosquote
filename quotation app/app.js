@@ -36,15 +36,21 @@
       done: "Done",
       importHtml: "Import HTML",
       exportHtml: "Export HTML",
+      exportWps: "Export WPS",
       printPdf: "Print / PDF",
       exportBackup: "Export backup",
       quotes: "Quotes",
       products: "Products",
+      product: "Product",
       photos: "Photos",
       total: "Total",
+      totalPrice: "Total price",
       refresh: "Refresh",
       quoteName: "Quote name",
+      quoteDate: "Date",
       quoteNamePlaceholder: "Quote 1",
+      quoteFreight: "Quote freight",
+      quoteFreightPlaceholder: "Optional total freight",
       status: "Status",
       supplier: "Supplier",
       supplierPlaceholder: "Supplier name",
@@ -65,11 +71,11 @@
       passwordTooShort: "Password must have at least 6 characters",
       signedOut: "Signed out",
       authRequired: "Sign in to save online history",
-      guestMode: "Guest quote",
-      guestLink: "Guest link",
-      guestLinkCopied: "Guest link copied",
-      guestLinkPrompt: "Copy this guest link",
-      guestLinkError: "Could not create guest link",
+      guestMode: "Customer quote",
+      guestLink: "Customer link",
+      guestLinkCopied: "Customer link copied",
+      guestLinkPrompt: "Copy this customer link",
+      guestLinkError: "Could not create customer link",
       globalDrop: "Drop, tap, or paste photos here to create a new product. Select a product first to add more photos to it.",
       emptyState: "Create a quote or add product photos to start.",
       noQuotes: "No quotes yet",
@@ -85,7 +91,9 @@
       removePhoto: "Remove photo",
       photoDrop: "Tap, drop, or paste photos here",
       productPrice: "Product price",
+      unitPrice: "Unit price",
       freight: "Freight",
+      shippingCost: "Shipping cost",
       unitTotal: "Unit total",
       priceInclShipping: "Price incl. shipping",
       availableSizes: "Available sizes",
@@ -97,6 +105,14 @@
       measurements: "Measurements / size chart link",
       measurementsPlaceholder: "Ex: S bust 84, M bust 88...",
       quantityBySize: "Quantity by size",
+      size: "Size",
+      pcs: "PCS",
+      number: "No.",
+      totalNumber: "Total number",
+      actualPayment: "Actual payment",
+      productTotal: "Product total",
+      noPhoto: "No photo",
+      notSelected: "Not selected",
       units: "Units",
       imagePreview: "Image preview",
       importError: "Could not import that file",
@@ -118,6 +134,7 @@
       copySuffix: "copy",
       importedAsQuote: "Imported as quote",
       exportedHtml: "HTML exported",
+      exportedWps: "WPS sheet exported",
       printViewOpened: "Print view opened",
       printViewBlocked: "Could not open print view",
       importedPrefix: "Imported",
@@ -179,11 +196,11 @@
       passwordTooShort: "密码至少需要 6 个字符",
       signedOut: "Signed out",
       authRequired: "Sign in to save online history",
-      guestMode: "Guest quote",
-      guestLink: "Guest link",
-      guestLinkCopied: "Guest link copied",
-      guestLinkPrompt: "Copy this guest link",
-      guestLinkError: "Could not create guest link",
+      guestMode: "Customer quote",
+      guestLink: "Customer link",
+      guestLinkCopied: "Customer link copied",
+      guestLinkPrompt: "Copy this customer link",
+      guestLinkError: "Could not create customer link",
       globalDrop: "把图片拖放或粘贴到这里可创建新产品。先点击某个产品，再粘贴图片可添加到该产品。",
       emptyState: "创建报价或添加产品图片开始。",
       noQuotes: "暂无报价",
@@ -297,7 +314,7 @@
     },
     {
       selector: "#shareGuestBtn",
-      en: ["Guest link", "After signing in and saving online, create a link that opens only this quote for a guest."],
+      en: ["Customer link", "After signing in and saving online, create a read-only quote sheet for the customer."],
       zh: ["访客链接", "登录并线上保存后，可以生成只打开当前报价的访客链接。"]
     },
     {
@@ -320,7 +337,7 @@
           "If the chip says Local mode, quotes are stored only in this browser.",
           "If the chip says Guest mode, you can work without an account and save locally in this browser.",
           "If the chip says Online saving, quotes are stored in Supabase under your user.",
-          "If the chip says Guest quote, the visitor can open only the shared quote."
+          "If the chip says Customer quote, the visitor can open only the shared quote sheet."
         ]
       },
       {
@@ -329,7 +346,7 @@
           "Use New quote to start a new budget request.",
           "Use History to reopen saved quotes.",
           "Use the delete button in History to remove quotes created by mistake.",
-          "Use Save after important changes, especially before sharing a guest link."
+          "Use Save after important changes, especially before sharing a customer link."
         ]
       },
       {
@@ -344,8 +361,8 @@
       {
         title: "4. Sharing and backups",
         items: [
-          "Guest link creates a private link for one quote only.",
-          "Guests do not see your full history.",
+          "Customer link creates a private, read-only sheet for one quote only.",
+          "Customers do not see your full history.",
           "Export backup downloads all quotes currently loaded in the app.",
           "Import HTML/JSON restores a previous backup as a quote."
         ]
@@ -409,6 +426,7 @@
     manualBtn: document.getElementById("manualBtn"),
     importBtn: document.getElementById("importBtn"),
     exportHtmlBtn: document.getElementById("exportHtmlBtn"),
+    exportWpsBtn: document.getElementById("exportWpsBtn"),
     printPdfBtn: document.getElementById("printPdfBtn"),
     exportBtn: document.getElementById("exportBtn"),
     refreshBtn: document.getElementById("refreshBtn"),
@@ -419,6 +437,7 @@
     quoteName: document.getElementById("quoteName"),
     quoteStatus: document.getElementById("quoteStatus"),
     supplierName: document.getElementById("supplierName"),
+    quoteFreight: document.getElementById("quoteFreight"),
     globalDrop: document.getElementById("globalDrop"),
     productList: document.getElementById("productList"),
     emptyState: document.getElementById("emptyState"),
@@ -536,6 +555,7 @@
     els.refreshBtn.addEventListener("click", loadAndRender);
     els.importBtn.addEventListener("click", () => els.importInput.click());
     els.exportHtmlBtn.addEventListener("click", exportCurrentHtml);
+    els.exportWpsBtn.addEventListener("click", exportCurrentWpsSheet);
     els.printPdfBtn.addEventListener("click", printCurrentQuote);
     els.exportBtn.addEventListener("click", exportBackup);
     els.addProductBtn.addEventListener("click", () => {
@@ -571,6 +591,16 @@
       if (!quote) return;
       quote.supplierName = els.supplierName.value;
       markDirty();
+    });
+
+    els.quoteFreight.addEventListener("input", () => {
+      const quote = currentQuote();
+      if (!quote) return;
+      quote.freight = moneyField(els.quoteFreight.value);
+      markDirty();
+      renderProducts();
+      renderStats();
+      renderQuoteList();
     });
 
     els.imageInput.addEventListener("change", async (event) => {
@@ -944,6 +974,18 @@
   function updateAuthUI() {
     const isGuest = Boolean(state.guestToken);
     const isSignedIn = Boolean(state.user && !isGuest);
+    const ownerOnlyButtons = [
+      els.newQuoteBtn,
+      els.historyBtn,
+      els.saveQuoteBtn,
+      els.guideBtn,
+      els.manualBtn,
+      els.importBtn,
+      els.exportBtn,
+      els.exportWpsBtn,
+      els.addProductBtn,
+      els.addPhotosBtn
+    ];
     els.authForm.hidden = isGuest;
     els.authEmail.hidden = isGuest || isSignedIn;
     els.authPassword.hidden = isGuest || isSignedIn;
@@ -951,8 +993,10 @@
     els.authSignupBtn.hidden = isGuest || isSignedIn;
     els.authUser.textContent = isGuest ? t("guestMode") : (isSignedIn ? state.user.email : "");
     els.authLogoutBtn.hidden = !isSignedIn;
-    els.newQuoteBtn.disabled = isGuest;
-    els.historyBtn.disabled = isGuest;
+    ownerOnlyButtons.forEach((button) => {
+      button.hidden = isGuest;
+      button.disabled = isGuest;
+    });
     els.shareGuestBtn.hidden = isGuest;
   }
 
@@ -1144,6 +1188,7 @@
       name: quote.name,
       status: quote.status,
       supplierName: quote.supplierName,
+      freight: quote.freight,
       guestToken: quote.guestToken,
       products: [],
       createdAt: quote.createdAt,
@@ -1216,6 +1261,8 @@
   }
 
   async function saveQuote(options = {}) {
+    if (state.guestToken) return null;
+
     const quote = currentQuote();
     if (!quote) return null;
 
@@ -1398,13 +1445,55 @@
   function render() {
     const quote = currentQuote();
     applyLanguage();
+    if (state.guestToken) {
+      renderCustomerQuotePage(quote);
+      updateModeChip();
+      return;
+    }
+    renderOwnerWorkspace();
     els.quoteName.value = quote?.name || "";
     renderQuoteStatusSelect(quote?.status || "Draft");
     els.supplierName.value = quote?.supplierName || "";
+    els.quoteFreight.value = quote?.freight ?? "";
     renderQuoteList();
     renderProducts();
     renderStats();
     updateModeChip();
+  }
+
+  function renderOwnerWorkspace() {
+    document.body.classList.remove("customer-mode");
+    document.querySelector(".layout")?.removeAttribute("hidden");
+    document.getElementById("customerQuotePage")?.remove();
+    document.getElementById("quoteSheetStyles")?.remove();
+  }
+
+  function renderCustomerQuotePage(quote) {
+    document.body.classList.add("customer-mode");
+    document.querySelector(".layout")?.setAttribute("hidden", "");
+    ensureQuoteSheetStyles();
+
+    let page = document.getElementById("customerQuotePage");
+    if (!page) {
+      page = document.createElement("main");
+      page.id = "customerQuotePage";
+      page.className = "customer-quote-page";
+      document.querySelector(".topbar")?.insertAdjacentElement("afterend", page);
+    }
+
+    page.innerHTML = quote
+      ? quoteSheetMarkup(quote)
+      : `<section class="quote-sheet empty-sheet"><p>${escapeHtml(t("openError"))}</p></section>`;
+  }
+
+  function ensureQuoteSheetStyles() {
+    let style = document.getElementById("quoteSheetStyles");
+    if (!style) {
+      style = document.createElement("style");
+      style.id = "quoteSheetStyles";
+      document.head.appendChild(style);
+    }
+    style.textContent = quoteSheetStyles();
   }
 
   function renderQuoteStatusSelect(value) {
@@ -1463,6 +1552,8 @@
   }
 
   function productTemplate(product) {
+    const quote = currentQuote();
+    const usesGlobalFreight = quoteUsesGlobalFreight(quote);
     const images = product.images.map((image) => `
       <div class="thumb" data-image-id="${image.id}">
         <img src="${image.src}" alt="${escapeAttr(image.name)}">
@@ -1506,7 +1597,7 @@
             </div>
             <div class="field supplier-field">
               <label>${escapeHtml(t("freight"))}</label>
-              <input inputmode="decimal" data-field="freight" value="${escapeAttr(product.freight)}" placeholder="USD">
+              <input inputmode="decimal" data-field="freight" value="${escapeAttr(product.freight)}" placeholder="USD" ${usesGlobalFreight ? "disabled" : ""}>
             </div>
             <div class="field supplier-field">
               <label>${escapeHtml(t("availableSizes"))}</label>
@@ -1541,15 +1632,15 @@
             <span>${escapeHtml(t("productPrice"))}</span>
           </div>
           <div class="total-card">
-            <strong data-total="freight">${formatMoney(product.freight)}</strong>
+            <strong data-total="freight">${usesGlobalFreight ? "-" : formatMoney(productDisplayFreight(product, quote))}</strong>
             <span>${escapeHtml(t("freight"))}</span>
           </div>
           <div class="total-card">
-            <strong data-total="unit">${formatMoney(productUnitTotal(product))}</strong>
+            <strong data-total="unit">${formatMoney(productDisplayUnitTotal(product, quote))}</strong>
             <span>${escapeHtml(t("unitTotal"))}</span>
           </div>
           <div class="total-card">
-            <strong data-total="product">${formatMoney(productTotal(product))}</strong>
+            <strong data-total="product">${formatMoney(productDisplayTotal(product, quote))}</strong>
             <span>${escapeHtml(t("total"))}</span>
           </div>
         </div>
@@ -1568,6 +1659,8 @@
 
   function updateProductTotals(card, product) {
     if (!card) return;
+    const quote = currentQuote();
+    const usesGlobalFreight = quoteUsesGlobalFreight(quote);
     const units = card.querySelector('[data-total="units"]');
     const base = card.querySelector('[data-total="base"]');
     const freight = card.querySelector('[data-total="freight"]');
@@ -1575,9 +1668,9 @@
     const total = card.querySelector('[data-total="product"]');
     if (units) units.textContent = productUnits(product);
     if (base) base.textContent = formatMoney(product.productPrice);
-    if (freight) freight.textContent = formatMoney(product.freight);
-    if (unit) unit.textContent = formatMoney(productUnitTotal(product));
-    if (total) total.textContent = formatMoney(productTotal(product));
+    if (freight) freight.textContent = usesGlobalFreight ? "-" : formatMoney(productDisplayFreight(product, quote));
+    if (unit) unit.textContent = formatMoney(productDisplayUnitTotal(product, quote));
+    if (total) total.textContent = formatMoney(productDisplayTotal(product, quote));
   }
 
   function openImagePicker(productId = "") {
@@ -1590,6 +1683,8 @@
   }
 
   async function addFilesToTarget(files, productId = state.pasteTargetProductId) {
+    if (state.guestToken) return;
+
     const quote = currentQuote();
     if (!quote) return;
     const imageFiles = files.filter(isImageFile);
@@ -1677,6 +1772,7 @@
       name: nextQuoteName(),
       status: "Draft",
       supplierName: "",
+      freight: "",
       products: [],
       createdAt: now,
       updatedAt: now
@@ -1710,6 +1806,7 @@
       name: row.name,
       status: row.status,
       supplierName: row.supplier_name || row.supplierName || "",
+      freight: row.freight ?? row.shipping ?? row.shippingCost ?? "",
       products: [],
       createdAt: row.created_at || row.createdAt,
       updatedAt: row.updated_at || row.updatedAt
@@ -1722,6 +1819,7 @@
       name: String(input.name || t("quotePrefix")),
       status: normalizeQuoteStatus(input.status),
       supplierName: String(input.supplierName || input.supplier_name || ""),
+      freight: moneyField(input.freight ?? input.shipping ?? input.shippingCost ?? ""),
       guestToken: String(input.guestToken || input.guest_token || ""),
       products: Array.isArray(input.products) ? input.products.map(normalizeProduct) : [],
       createdAt: input.createdAt || input.created_at || new Date().toISOString(),
@@ -1903,16 +2001,55 @@
     return toNumber(product.productPrice ?? product.priceWithShipping) + toNumber(product.freight);
   }
 
+  function productDisplayFreight(product, quote = currentQuote()) {
+    return quoteUsesGlobalFreight(quote) ? 0 : productFreightTotal(product);
+  }
+
+  function productDisplayUnitTotal(product, quote = currentQuote()) {
+    return toNumber(product.productPrice ?? product.priceWithShipping) + (quoteUsesGlobalFreight(quote) ? 0 : toNumber(product.freight));
+  }
+
+  function productDisplayTotal(product, quote = currentQuote()) {
+    return productUnits(product) * productDisplayUnitTotal(product, quote);
+  }
+
+  function productPriceTotal(product) {
+    return productUnits(product) * toNumber(product.productPrice);
+  }
+
+  function productFreightTotal(product) {
+    return productUnits(product) * toNumber(product.freight);
+  }
+
   function productTotal(product) {
     return productUnits(product) * productUnitTotal(product);
   }
 
+  function quoteUsesGlobalFreight(quote) {
+    return quote?.freight !== "" && quote?.freight !== undefined && quote?.freight !== null;
+  }
+
+  function quoteCalculationTotals(quote) {
+    const products = quote?.products || [];
+    const productTotal = products.reduce((sum, product) => sum + productPriceTotal(product), 0);
+    const productFreight = products.reduce((sum, product) => sum + productFreightTotal(product), 0);
+    const freight = quoteUsesGlobalFreight(quote) ? toNumber(quote.freight) : productFreight;
+    return {
+      units: products.reduce((sum, product) => sum + productUnits(product), 0),
+      productTotal,
+      freight,
+      actualPayment: productTotal + freight,
+      usesGlobalFreight: quoteUsesGlobalFreight(quote)
+    };
+  }
+
   function quoteMetrics(quote) {
+    const totals = quoteCalculationTotals(quote);
     return {
       products: quote.products.length,
       photos: quote.products.reduce((sum, product) => sum + product.images.length, 0),
-      units: quote.products.reduce((sum, product) => sum + productUnits(product), 0),
-      total: quote.products.reduce((sum, product) => sum + productTotal(product), 0)
+      units: totals.units,
+      total: totals.actualPayment
     };
   }
 
@@ -2006,6 +2143,16 @@
     showToast(t("exportedHtml"));
   }
 
+  async function exportCurrentWpsSheet() {
+    const quote = currentQuote();
+    if (!quote) return;
+    showToast(t("preparingExport"), 4200);
+    const exportQuote = await quoteForHtmlExport(quote);
+    const xlsx = await quoteXlsxBlob(exportQuote);
+    downloadBlob(xlsx, `${safeFileName(quote.name || t("quotePrefix"))}-${dateStamp()}-wps.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    showToast(t("exportedWps"));
+  }
+
   async function printCurrentQuote() {
     const quote = currentQuote();
     if (!quote) return;
@@ -2030,9 +2177,7 @@
   }
 
   function quoteHtmlDocument(quote, options = {}) {
-    const metrics = quoteMetrics(quote);
     const bootstrap = JSON.stringify(normalizeQuote(JSON.parse(JSON.stringify(quote)))).replace(/</g, "\\u003c");
-    const products = quote.products.map((product) => productHtmlSection(product)).join("");
     return `<!doctype html>
 <html lang="en">
 <head>
@@ -2040,72 +2185,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(quote.name || t("untitledQuote"))}</title>
   <style>
-    :root { color-scheme: light; --ink:#172033; --muted:#667085; --line:#d7dee8; --soft:#f6f8fb; --accent:#0f766e; }
-    * { box-sizing: border-box; }
-    body { margin: 0; color: var(--ink); background: #eef2f6; font: 13px/1.45 Arial, Helvetica, sans-serif; }
-    main { max-width: 1120px; margin: 0 auto; padding: 24px; }
-    header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: start; margin-bottom: 18px; }
-    h1, h2, h3, p { margin: 0; }
-    h1 { font-size: 26px; line-height: 1.12; }
-    h2 { font-size: 16px; }
-    h3 { font-size: 14px; }
-    .muted { color: var(--muted); }
-    .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 16px 0; }
-    .box, .product { border: 1px solid var(--line); border-radius: 8px; background: #fff; }
-    .box { padding: 10px; }
-    .box strong { display: block; font-size: 18px; }
-    .product { margin-top: 12px; overflow: hidden; break-inside: avoid; page-break-inside: avoid; }
-    .product-head { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 10px; border-bottom: 1px solid var(--line); background: var(--soft); }
-    .code { font-weight: 800; text-align: center; padding: 7px; border: 1px solid var(--line); border-radius: 6px; background: #eaf6ef; }
-    .status { color: var(--muted); font-weight: 700; }
-    .product-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 12px; padding: 10px; }
-    .photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-content: start; }
-    .photos img { width: 100%; aspect-ratio: 1 / 1.08; object-fit: cover; border: 1px solid var(--line); border-radius: 6px; }
-    .fields { display: grid; gap: 10px; }
-    .money { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-    .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-    .label { color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
-    .value { margin-top: 2px; font-weight: 700; word-break: break-word; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid var(--line); padding: 6px; text-align: center; }
-    th { background: var(--soft); color: var(--muted); font-size: 11px; }
-    .total-line { margin-top: 18px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; text-align: right; }
-    .total-line strong { font-size: 22px; }
-    @media (max-width: 760px) {
-      main { padding: 12px; }
-      header, .product-body, .summary, .money, .field-grid { grid-template-columns: 1fr; }
-      .photos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media print {
-      body { background: #fff; }
-      main { max-width: none; padding: 0; }
-      .product { break-inside: avoid; page-break-inside: avoid; }
-    }
+    ${quoteSheetStyles()}
   </style>
 </head>
 <body>
-  <main>
-    <header>
-      <div>
-        <h1>${escapeHtml(quote.name || t("untitledQuote"))}</h1>
-        <p class="muted">${escapeHtml(statusLabel(quote.status))} / ${escapeHtml(formatDate(quote.updatedAt || quote.createdAt))}</p>
-      </div>
-      <div>
-        <div class="label">${escapeHtml(t("supplier"))}</div>
-        <div class="value">${escapeHtml(quote.supplierName || "-")}</div>
-      </div>
-    </header>
-    <section class="summary">
-      <div class="box"><strong>${metrics.products}</strong><span class="muted">${escapeHtml(t("products"))}</span></div>
-      <div class="box"><strong>${metrics.photos}</strong><span class="muted">${escapeHtml(t("photos"))}</span></div>
-      <div class="box"><strong>${metrics.units}</strong><span class="muted">${escapeHtml(t("units"))}</span></div>
-      <div class="box"><strong>${formatMoney(metrics.total)}</strong><span class="muted">${escapeHtml(t("total"))}</span></div>
-    </section>
-    ${products || `<p class="muted">${escapeHtml(t("emptyState"))}</p>`}
-    <section class="total-line">
-      <div class="label">${escapeHtml(t("total"))}</div>
-      <strong>${formatMoney(metrics.total)}</strong>
-    </section>
+  <main class="customer-quote-page">
+    ${quoteSheetMarkup(quote)}
   </main>
   <script type="application/json" id="bootstrap-data">${bootstrap}</script>
   ${options.autoPrint ? "<script>window.addEventListener('load',function(){setTimeout(function(){window.print();},350);});</script>" : ""}
@@ -2113,41 +2198,612 @@
 </html>`;
   }
 
-  function productHtmlSection(product) {
-    const images = product.images.map((image) => `<img src="${escapeAttr(image.src)}" alt="${escapeAttr(image.name || product.code)}">`).join("");
-    const sizes = SIZE_KEYS.map((size) => `<td>${toNumber(product.sizes[size])}</td>`).join("");
-    const sizeHeads = SIZE_KEYS.map((size) => `<th>${escapeHtml(size)}</th>`).join("");
-    return `<article class="product">
-      <div class="product-head">
-        <div class="code">${escapeHtml(product.code)}</div>
-        <div>
-          <h2>${escapeHtml(product.name || t("shortDescription"))}</h2>
-          <div class="status">${escapeHtml(statusLabel(product.status))}</div>
+  function quoteSheetStyles() {
+    return `
+      :root { color-scheme: light; --sheet-ink:#172033; --sheet-muted:#667085; --sheet-line:#d7dee8; --sheet-soft:#f6f8fb; --sheet-accent:#0f766e; --sheet-bg:#eef2f6; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--sheet-bg); color: var(--sheet-ink); font: 13px/1.45 Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .customer-quote-page { padding: 18px; }
+      .quote-sheet { max-width: 1120px; margin: 0 auto; padding: 22px; background: #fff; border: 1px solid var(--sheet-line); border-radius: 8px; box-shadow: 0 10px 28px rgba(15, 23, 42, .08); }
+      .sheet-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: start; padding-bottom: 14px; border-bottom: 2px solid var(--sheet-ink); }
+      .sheet-title h1 { margin: 0; font-size: 26px; line-height: 1.12; }
+      .sheet-title p, .sheet-meta p { margin: 4px 0 0; color: var(--sheet-muted); }
+      .sheet-total { min-width: 176px; padding: 11px 12px; border: 1px solid var(--sheet-line); border-radius: 8px; background: var(--sheet-soft); text-align: right; }
+      .sheet-label { color: var(--sheet-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+      .sheet-total strong { display: block; margin-top: 2px; font-size: 24px; line-height: 1.08; }
+      .sheet-table-wrap { margin-top: 16px; overflow-x: auto; }
+      .sheet-table { width: 100%; min-width: 820px; border-collapse: collapse; }
+      .sheet-table th, .sheet-table td { border: 1px solid var(--sheet-line); padding: 8px; vertical-align: middle; text-align: center; }
+      .sheet-table th { background: var(--sheet-soft); color: var(--sheet-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+      .sheet-table td.sheet-product-cell { text-align: left; min-width: 180px; }
+      .sheet-no { width: 66px; font-weight: 800; }
+      .sheet-code { display: inline-block; min-width: 58px; margin-bottom: 4px; padding: 4px 7px; border-radius: 6px; background: #eaf6ef; color: #0f3f38; font-weight: 800; text-align: center; }
+      .sheet-name { display: block; color: var(--sheet-muted); font-weight: 700; word-break: break-word; }
+      .sheet-money { font-weight: 800; white-space: nowrap; }
+      .sheet-size { min-width: 118px; font-weight: 800; word-break: break-word; }
+      .sheet-photos { position: relative; display: grid; grid-template-columns: repeat(2, 58px); gap: 5px; justify-content: center; align-items: center; }
+      .sheet-photos img { width: 58px; height: 64px; object-fit: cover; border: 1px solid var(--sheet-line); border-radius: 6px; background: #fff; }
+      .sheet-more { position: absolute; right: 2px; bottom: 2px; padding: 2px 5px; border-radius: 999px; background: rgba(15, 23, 42, .78); color: #fff; font-size: 11px; font-weight: 800; }
+      .sheet-no-photo { width: 86px; min-height: 64px; display: grid; place-items: center; border: 1px dashed var(--sheet-line); border-radius: 6px; color: var(--sheet-muted); font-weight: 800; }
+      .sheet-cards { display: none; margin-top: 14px; gap: 10px; }
+      .sheet-card { border: 1px solid var(--sheet-line); border-radius: 8px; overflow: hidden; background: #fff; break-inside: avoid; page-break-inside: avoid; }
+      .sheet-card .sheet-photos { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px; background: var(--sheet-soft); }
+      .sheet-card .sheet-photos img, .sheet-card .sheet-no-photo { width: 100%; height: auto; aspect-ratio: 1 / 1.08; }
+      .sheet-card-body { display: grid; gap: 8px; padding: 10px; }
+      .sheet-card-head { display: flex; align-items: start; justify-content: space-between; gap: 10px; }
+      .sheet-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .sheet-card-field { min-width: 0; padding: 8px; border: 1px solid var(--sheet-line); border-radius: 6px; background: var(--sheet-soft); }
+      .sheet-card-field strong { display: block; margin-top: 2px; word-break: break-word; }
+      .sheet-summary { width: min(360px, 100%); margin: 14px 0 0 auto; border: 1px solid var(--sheet-line); border-radius: 8px; overflow: hidden; }
+      .sheet-summary-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 9px 11px; border-bottom: 1px solid var(--sheet-line); background: #fff; }
+      .sheet-summary-row:last-child { border-bottom: 0; }
+      .sheet-summary-row span { color: var(--sheet-muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+      .sheet-summary-row strong { font-size: 15px; white-space: nowrap; }
+      .sheet-summary-total { background: #fff8d8; }
+      .sheet-summary-total strong { font-size: 18px; }
+      .sheet-empty { margin-top: 16px; color: var(--sheet-muted); font-weight: 700; }
+      .customer-mode .topbar { position: static; }
+      @media (max-width: 760px) {
+        .customer-quote-page { padding: 10px; }
+        .quote-sheet { padding: 12px; border-radius: 8px; box-shadow: none; }
+        .sheet-header { grid-template-columns: 1fr; }
+        .sheet-total { text-align: left; min-width: 0; }
+        .sheet-title h1 { font-size: 21px; }
+        .sheet-table-wrap { display: none; }
+        .sheet-cards { display: grid; }
+      }
+      @media print {
+        body { background: #fff; }
+        .customer-mode .topbar { display: none; }
+        .customer-quote-page { padding: 0; }
+        .quote-sheet { max-width: none; padding: 0; border: 0; box-shadow: none; }
+        .sheet-table-wrap { display: block; overflow: visible; }
+        .sheet-cards { display: none; }
+        .sheet-table { min-width: 0; }
+        .sheet-card, .sheet-table tr { break-inside: avoid; page-break-inside: avoid; }
+      }
+    `;
+  }
+
+  function quoteSheetMarkup(quote) {
+    const totals = quoteCalculationTotals(quote);
+    const tableRows = quote.products.map((product, index) => quoteSheetTableRow(product, index, totals.usesGlobalFreight)).join("");
+    const cards = quote.products.map((product, index) => quoteSheetCard(product, index, totals.usesGlobalFreight)).join("");
+    return `<section class="quote-sheet">
+      <header class="sheet-header">
+        <div class="sheet-title">
+          <h1>${escapeHtml(quote.name || t("untitledQuote"))}</h1>
+          <p>${escapeHtml(t("supplier"))}: ${escapeHtml(quote.supplierName || "-")}</p>
+          <p>${escapeHtml(t("quoteDate"))}: ${escapeHtml(formatDate(quote.updatedAt || quote.createdAt))}</p>
         </div>
-        <strong>${formatMoney(productTotal(product))}</strong>
-      </div>
-      <div class="product-body">
-        <div class="photos">${images || `<div class="muted">${escapeHtml(t("photos"))}: 0</div>`}</div>
-        <div class="fields">
-          <div class="money">
-            ${htmlField(t("productPrice"), formatMoney(product.productPrice))}
-            ${htmlField(t("freight"), formatMoney(product.freight))}
-            ${htmlField(t("unitTotal"), formatMoney(productUnitTotal(product)))}
-            ${htmlField(t("units"), productUnits(product))}
-            ${htmlField(t("total"), formatMoney(productTotal(product)))}
-          </div>
-          <div class="field-grid">
-            ${htmlField(t("availableSizes"), product.availableSizes || "-")}
-            ${htmlField(t("availableColors"), product.availableColors || "-")}
-          </div>
-          ${htmlField(t("measurements"), product.sizeChart || "-")}
-          <table>
-            <thead><tr>${sizeHeads}</tr></thead>
-            <tbody><tr>${sizes}</tr></tbody>
+        <div class="sheet-total">
+          <div class="sheet-label">${escapeHtml(t("actualPayment"))}</div>
+          <strong>${formatMoney(totals.actualPayment)}</strong>
+        </div>
+      </header>
+      ${quote.products.length ? `
+        <div class="sheet-table-wrap">
+          <table class="sheet-table">
+            <thead>
+              <tr>
+                <th>${escapeHtml(t("number"))}</th>
+                <th>${escapeHtml(t("photos"))}</th>
+                <th>${escapeHtml(t("unitPrice"))}</th>
+                <th>${escapeHtml(t("pcs"))}</th>
+                <th>${escapeHtml(t("size"))}</th>
+                <th>${escapeHtml(t("totalPrice"))}</th>
+                <th>${escapeHtml(t("shippingCost"))}</th>
+              </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
           </table>
+        </div>
+        <div class="sheet-cards">${cards}</div>
+        ${quoteSheetSummary(totals)}
+      ` : `<p class="sheet-empty">${escapeHtml(t("emptyState"))}</p>`}
+    </section>`;
+  }
+
+  function quoteSheetTableRow(product, index, usesGlobalFreight) {
+    return `<tr>
+      <td class="sheet-no">${index + 1}<br><span class="sheet-code">${escapeHtml(product.code)}</span></td>
+      <td>${quoteSheetPhotos(product, index)}</td>
+      <td class="sheet-money">${formatMoney(product.productPrice)}</td>
+      <td><strong>${productUnits(product)}</strong></td>
+      <td class="sheet-size">${escapeHtml(productSizeSummary(product))}</td>
+      <td class="sheet-money">${formatMoney(productPriceTotal(product))}</td>
+      <td class="sheet-money">${usesGlobalFreight ? "-" : formatMoney(productFreightTotal(product))}</td>
+    </tr>`;
+  }
+
+  function quoteSheetCard(product, index, usesGlobalFreight) {
+    return `<article class="sheet-card">
+      ${quoteSheetPhotos(product, index)}
+      <div class="sheet-card-body">
+        <div class="sheet-card-head">
+          <div><span class="sheet-code">${index + 1} / ${escapeHtml(product.code)}</span>${product.name ? `<span class="sheet-name">${escapeHtml(product.name)}</span>` : ""}</div>
+          <strong class="sheet-money">${formatMoney(productPriceTotal(product))}</strong>
+        </div>
+        <div class="sheet-card-grid">
+          ${quoteSheetCardField(t("unitPrice"), formatMoney(product.productPrice))}
+          ${quoteSheetCardField(t("pcs"), productUnits(product))}
+          ${quoteSheetCardField(t("size"), productSizeSummary(product))}
+          ${quoteSheetCardField(t("shippingCost"), usesGlobalFreight ? "-" : formatMoney(productFreightTotal(product)))}
         </div>
       </div>
     </article>`;
+  }
+
+  function quoteSheetSummary(totals) {
+    return `<section class="sheet-summary">
+      <div class="sheet-summary-row"><span>${escapeHtml(t("totalNumber"))}</span><strong>${totals.units}</strong></div>
+      <div class="sheet-summary-row"><span>${escapeHtml(t("productTotal"))}</span><strong>${formatMoney(totals.productTotal)}</strong></div>
+      <div class="sheet-summary-row"><span>${escapeHtml(t("freight"))}</span><strong>${formatMoney(totals.freight)}</strong></div>
+      <div class="sheet-summary-row sheet-summary-total"><span>${escapeHtml(t("actualPayment"))}</span><strong>${formatMoney(totals.actualPayment)}</strong></div>
+    </section>`;
+  }
+
+  function quoteSheetCardField(label, value) {
+    return `<div class="sheet-card-field"><div class="sheet-label">${escapeHtml(label)}</div><strong>${escapeHtml(value)}</strong></div>`;
+  }
+
+  function quoteSheetProductLabel(product) {
+    const name = product.name || t("shortDescription");
+    return `<span class="sheet-code">${escapeHtml(product.code)}</span><span class="sheet-name">${escapeHtml(name)}</span>`;
+  }
+
+  function quoteSheetPhotos(product, index) {
+    const images = product.images.slice(0, 4).map((image, imageIndex) => (
+      `<img src="${escapeAttr(image.src)}" alt="${escapeAttr(image.name || `${product.code} ${index + 1}-${imageIndex + 1}`)}">`
+    )).join("");
+    const extra = product.images.length > 4 ? `<span class="sheet-more">+${product.images.length - 4}</span>` : "";
+    return `<div class="sheet-photos">${images || `<div class="sheet-no-photo">${escapeHtml(t("noPhoto"))}</div>`}${extra}</div>`;
+  }
+
+  function productSizeSummary(product) {
+    const selected = SIZE_KEYS
+      .map((size) => ({ size, units: toNumber(product.sizes[size]) }))
+      .filter((item) => item.units > 0)
+      .map((item) => `${item.size} x ${item.units}`);
+    return selected.join(", ") || product.availableSizes || t("notSelected");
+  }
+
+  async function quoteXlsxBlob(quote) {
+    const startRow = 5;
+    const productRows = Math.max(quote.products.length, 1);
+    const lastProductRow = startRow + productRows - 1;
+    const summaryStart = lastProductRow + 1;
+    const images = await quoteXlsxImages(quote, startRow);
+    const files = [
+      xlsxTextFile("[Content_Types].xml", xlsxContentTypes(images.length > 0)),
+      xlsxTextFile("_rels/.rels", xlsxRootRels()),
+      xlsxTextFile("xl/workbook.xml", xlsxWorkbookXml()),
+      xlsxTextFile("xl/_rels/workbook.xml.rels", xlsxWorkbookRels()),
+      xlsxTextFile("xl/styles.xml", xlsxStylesXml()),
+      xlsxTextFile("xl/worksheets/sheet1.xml", xlsxSheetXml(quote, startRow, lastProductRow, summaryStart, images.length > 0))
+    ];
+
+    if (images.length) {
+      files.push(xlsxTextFile("xl/worksheets/_rels/sheet1.xml.rels", xlsxSheetRels()));
+      files.push(xlsxTextFile("xl/drawings/drawing1.xml", xlsxDrawingXml(images)));
+      files.push(xlsxTextFile("xl/drawings/_rels/drawing1.xml.rels", xlsxDrawingRels(images)));
+      images.forEach((image) => files.push({ name: `xl/media/${image.fileName}`, data: image.bytes }));
+    }
+
+    return createZip(files);
+  }
+
+  async function quoteXlsxImages(quote, startRow) {
+    const images = [];
+    for (let index = 0; index < quote.products.length; index += 1) {
+      const image = quote.products[index].images[0];
+      if (!image?.src) continue;
+      try {
+        const bytes = await imageSourceToPngBytes(image.src);
+        if (!bytes.length) continue;
+        images.push({
+          id: images.length + 1,
+          row: startRow + index,
+          fileName: `image${images.length + 1}.png`,
+          bytes
+        });
+      } catch (error) {
+        console.warn(error);
+      }
+    }
+    return images;
+  }
+
+  function xlsxContentTypes(hasImages) {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  ${hasImages ? `<Default Extension="png" ContentType="image/png"/>` : ""}
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+  ${hasImages ? `<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>` : ""}
+</Types>`;
+  }
+
+  function xlsxRootRels() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+  }
+
+  function xlsxWorkbookXml() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    <sheet name="Quote" sheetId="1" r:id="rId1"/>
+  </sheets>
+  <calcPr calcId="0" fullCalcOnLoad="1" forceFullCalc="1"/>
+</workbook>`;
+  }
+
+  function xlsxWorkbookRels() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+  }
+
+  function xlsxStylesXml() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="2">
+    <font><sz val="11"/><name val="Arial"/></font>
+    <font><b/><sz val="11"/><name val="Arial"/></font>
+  </fonts>
+  <fills count="5">
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFF6CF20"/><bgColor indexed="64"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFD8F0D2"/><bgColor indexed="64"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFDDEBF7"/><bgColor indexed="64"/></patternFill></fill>
+  </fills>
+  <borders count="2">
+    <border><left/><right/><top/><bottom/><diagonal/></border>
+    <border><left style="thin"><color rgb="FF6F806F"/></left><right style="thin"><color rgb="FF6F806F"/></right><top style="thin"><color rgb="FF6F806F"/></top><bottom style="thin"><color rgb="FF6F806F"/></bottom><diagonal/></border>
+  </borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="10">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="4" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="1" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
+    <xf numFmtId="4" fontId="1" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="4" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+  </cellXfs>
+  <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+  }
+
+  function xlsxSheetXml(quote, startRow, lastProductRow, summaryStart, hasImages) {
+    const finalRow = summaryStart + 3;
+    const totals = quoteCalculationTotals(quote);
+    const productRows = quote.products.length
+      ? quote.products.map((product, index) => xlsxProductRow(product, index, startRow + index, totals.usesGlobalFreight)).join("")
+      : xlsxRow(startRow, [
+        xlsxStringCell(`A${startRow}`, t("emptyState"), 4),
+        xlsxBlankCell(`B${startRow}`, 4),
+        xlsxBlankCell(`C${startRow}`, 5),
+        xlsxBlankCell(`D${startRow}`, 6),
+        xlsxBlankCell(`E${startRow}`, 5),
+        xlsxBlankCell(`F${startRow}`, 5),
+        xlsxBlankCell(`G${startRow}`, 4)
+      ], 54);
+    const mergeRefs = [
+      "A1:G1",
+      "A2:G2",
+      "A3:G3",
+      `A${summaryStart}:C${summaryStart}`,
+      `E${summaryStart}:G${summaryStart}`,
+      `A${summaryStart + 1}:D${summaryStart + 1}`,
+      `F${summaryStart + 1}:G${summaryStart + 1}`,
+      `A${summaryStart + 2}:E${summaryStart + 2}`,
+      `A${summaryStart + 3}:E${summaryStart + 3}`,
+      `F${summaryStart + 3}:G${summaryStart + 3}`
+    ];
+
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <dimension ref="A1:G${finalRow}"/>
+  <sheetViews><sheetView workbookViewId="0"/></sheetViews>
+  <sheetFormatPr defaultRowHeight="18"/>
+  <cols>
+    <col min="1" max="1" width="6" customWidth="1"/>
+    <col min="2" max="2" width="14" customWidth="1"/>
+    <col min="3" max="3" width="12" customWidth="1"/>
+    <col min="4" max="4" width="10" customWidth="1"/>
+    <col min="5" max="5" width="13" customWidth="1"/>
+    <col min="6" max="6" width="14" customWidth="1"/>
+    <col min="7" max="7" width="16" customWidth="1"/>
+  </cols>
+  <sheetData>
+    ${xlsxRow(1, [xlsxStringCell("A1", quote.name || t("untitledQuote"), 1)])}
+    ${xlsxRow(2, [xlsxStringCell("A2", `${t("supplier")}: ${quote.supplierName || "-"} / ${t("quoteDate")}: ${formatDate(quote.updatedAt || quote.createdAt)}`, 2)])}
+    ${xlsxRow(3, [xlsxStringCell("A3", "USD", 2)])}
+    ${xlsxRow(4, [
+      xlsxStringCell("A4", t("number"), 3),
+      xlsxStringCell("B4", t("photos"), 3),
+      xlsxStringCell("C4", t("unitPrice"), 3),
+      xlsxStringCell("D4", t("pcs"), 3),
+      xlsxStringCell("E4", t("totalPrice"), 3),
+      xlsxStringCell("F4", t("shippingCost"), 3),
+      xlsxStringCell("G4", t("size"), 3)
+    ], 22)}
+    ${productRows}
+    ${xlsxRow(summaryStart, [
+      xlsxStringCell(`A${summaryStart}`, t("totalNumber"), 7),
+      xlsxFormulaCell(`D${summaryStart}`, `SUM(D${startRow}:D${lastProductRow})`, 6, totals.units),
+      xlsxBlankCell(`E${summaryStart}`, 8)
+    ], 22)}
+    ${xlsxRow(summaryStart + 1, [
+      xlsxStringCell(`A${summaryStart + 1}`, t("productTotal"), 7),
+      xlsxFormulaCell(`E${summaryStart + 1}`, `SUM(E${startRow}:E${lastProductRow})`, 8, totals.productTotal),
+      xlsxBlankCell(`F${summaryStart + 1}`, 8)
+    ], 22)}
+    ${xlsxRow(summaryStart + 2, [
+      xlsxStringCell(`A${summaryStart + 2}`, t("freight"), 7),
+      totals.usesGlobalFreight
+        ? xlsxNumberCell(`F${summaryStart + 2}`, totals.freight, 8)
+        : xlsxFormulaCell(`F${summaryStart + 2}`, `SUM(F${startRow}:F${lastProductRow})`, 8, totals.freight)
+    ], 22)}
+    ${xlsxRow(summaryStart + 3, [
+      xlsxStringCell(`A${summaryStart + 3}`, t("actualPayment"), 7),
+      xlsxFormulaCell(`F${summaryStart + 3}`, `E${summaryStart + 1}+F${summaryStart + 2}`, 9, totals.actualPayment)
+    ], 24)}
+  </sheetData>
+  <mergeCells count="${mergeRefs.length}">
+    ${mergeRefs.map((ref) => `<mergeCell ref="${ref}"/>`).join("")}
+  </mergeCells>
+  ${hasImages ? `<drawing r:id="rId1"/>` : ""}
+</worksheet>`;
+  }
+
+  function xlsxProductRow(product, index, rowNumber, usesGlobalFreight) {
+    return xlsxRow(rowNumber, [
+      xlsxNumberCell(`A${rowNumber}`, index + 1, 4),
+      product.images[0] ? xlsxBlankCell(`B${rowNumber}`, 4) : xlsxStringCell(`B${rowNumber}`, product.code || t("noPhoto"), 4),
+      xlsxNumberCell(`C${rowNumber}`, toNumber(product.productPrice), 5),
+      xlsxNumberCell(`D${rowNumber}`, productUnits(product), 6),
+      xlsxFormulaCell(`E${rowNumber}`, `C${rowNumber}*D${rowNumber}`, 5, productPriceTotal(product)),
+      usesGlobalFreight ? xlsxBlankCell(`F${rowNumber}`, 5) : xlsxFormulaCell(`F${rowNumber}`, `${excelNumber(product.freight)}*D${rowNumber}`, 5, productFreightTotal(product)),
+      xlsxStringCell(`G${rowNumber}`, productSizeSummary(product), 4)
+    ], 62);
+  }
+
+  function xlsxRow(rowNumber, cells, height = 18) {
+    return `<row r="${rowNumber}" ht="${height}" customHeight="1">${cells.join("")}</row>`;
+  }
+
+  function xlsxStringCell(ref, value, style) {
+    return `<c r="${ref}" s="${style}" t="inlineStr"><is><t>${escapeXml(value)}</t></is></c>`;
+  }
+
+  function xlsxNumberCell(ref, value, style) {
+    return `<c r="${ref}" s="${style}"><v>${excelNumber(value)}</v></c>`;
+  }
+
+  function xlsxFormulaCell(ref, formula, style, value = "") {
+    const cachedValue = value === "" ? "" : `<v>${excelNumber(value)}</v>`;
+    return `<c r="${ref}" s="${style}"><f>${escapeXml(formula)}</f>${cachedValue}</c>`;
+  }
+
+  function xlsxBlankCell(ref, style) {
+    return `<c r="${ref}" s="${style}"/>`;
+  }
+
+  function xlsxSheetRels() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>
+</Relationships>`;
+  }
+
+  function xlsxDrawingXml(images) {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+  ${images.map((image) => xlsxDrawingAnchor(image)).join("")}
+</xdr:wsDr>`;
+  }
+
+  function xlsxDrawingAnchor(image) {
+    const row = image.row - 1;
+    return `<xdr:twoCellAnchor editAs="oneCell">
+    <xdr:from><xdr:col>1</xdr:col><xdr:colOff>95250</xdr:colOff><xdr:row>${row}</xdr:row><xdr:rowOff>95250</xdr:rowOff></xdr:from>
+    <xdr:to><xdr:col>2</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${row + 1}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to>
+    <xdr:pic>
+      <xdr:nvPicPr><xdr:cNvPr id="${image.id}" name="Picture ${image.id}"/><xdr:cNvPicPr/></xdr:nvPicPr>
+      <xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId${image.id}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>
+      <xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>
+    </xdr:pic>
+    <xdr:clientData/>
+  </xdr:twoCellAnchor>`;
+  }
+
+  function xlsxDrawingRels(images) {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  ${images.map((image) => `<Relationship Id="rId${image.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${image.fileName}"/>`).join("")}
+</Relationships>`;
+  }
+
+  async function imageSourceToPngBytes(src) {
+    const image = await loadImageElement(src);
+    const maxSize = 320;
+    const scale = Math.min(1, maxSize / Math.max(image.width || maxSize, image.height || maxSize));
+    const width = Math.max(1, Math.round((image.width || maxSize) * scale));
+    const height = Math.max(1, Math.round((image.height || maxSize) * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(image, 0, 0, width, height);
+    return dataUrlToBytes(canvas.toDataURL("image/png"));
+  }
+
+  function loadImageElement(src) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = src;
+    });
+  }
+
+  function dataUrlToBytes(dataUrl) {
+    const match = String(dataUrl || "").match(/^data:([^;,]+)?(;base64)?,(.*)$/);
+    if (!match) return new Uint8Array();
+    if (match[2]) {
+      const binary = atob(match[3]);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+      return bytes;
+    }
+    return textBytes(decodeURIComponent(match[3]));
+  }
+
+  function xlsxTextFile(name, value) {
+    return { name, data: textBytes(value) };
+  }
+
+  function textBytes(value) {
+    return new TextEncoder().encode(String(value));
+  }
+
+  function createZip(files) {
+    const localParts = [];
+    const centralParts = [];
+    let offset = 0;
+
+    files.forEach((file) => {
+      const nameBytes = textBytes(file.name);
+      const data = file.data instanceof Uint8Array ? file.data : textBytes(file.data);
+      const crc = crc32(data);
+      const localHeader = zipLocalHeader(nameBytes, data, crc);
+      const centralHeader = zipCentralHeader(nameBytes, data, crc, offset);
+      localParts.push(localHeader, data);
+      centralParts.push(centralHeader);
+      offset += localHeader.length + data.length;
+    });
+
+    const centralStart = offset;
+    const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+    const end = zipEndRecord(files.length, centralSize, centralStart);
+    return concatBytes([...localParts, ...centralParts, end]);
+  }
+
+  function zipLocalHeader(nameBytes, data, crc) {
+    const header = new Uint8Array(30 + nameBytes.length);
+    const view = new DataView(header.buffer);
+    view.setUint32(0, 0x04034b50, true);
+    view.setUint16(4, 20, true);
+    view.setUint16(6, 0, true);
+    view.setUint16(8, 0, true);
+    view.setUint16(10, 0, true);
+    view.setUint16(12, 0, true);
+    view.setUint32(14, crc, true);
+    view.setUint32(18, data.length, true);
+    view.setUint32(22, data.length, true);
+    view.setUint16(26, nameBytes.length, true);
+    view.setUint16(28, 0, true);
+    header.set(nameBytes, 30);
+    return header;
+  }
+
+  function zipCentralHeader(nameBytes, data, crc, offset) {
+    const header = new Uint8Array(46 + nameBytes.length);
+    const view = new DataView(header.buffer);
+    view.setUint32(0, 0x02014b50, true);
+    view.setUint16(4, 20, true);
+    view.setUint16(6, 20, true);
+    view.setUint16(8, 0, true);
+    view.setUint16(10, 0, true);
+    view.setUint16(12, 0, true);
+    view.setUint16(14, 0, true);
+    view.setUint32(16, crc, true);
+    view.setUint32(20, data.length, true);
+    view.setUint32(24, data.length, true);
+    view.setUint16(28, nameBytes.length, true);
+    view.setUint16(30, 0, true);
+    view.setUint16(32, 0, true);
+    view.setUint16(34, 0, true);
+    view.setUint16(36, 0, true);
+    view.setUint32(38, 0, true);
+    view.setUint32(42, offset, true);
+    header.set(nameBytes, 46);
+    return header;
+  }
+
+  function zipEndRecord(fileCount, centralSize, centralStart) {
+    const header = new Uint8Array(22);
+    const view = new DataView(header.buffer);
+    view.setUint32(0, 0x06054b50, true);
+    view.setUint16(4, 0, true);
+    view.setUint16(6, 0, true);
+    view.setUint16(8, fileCount, true);
+    view.setUint16(10, fileCount, true);
+    view.setUint32(12, centralSize, true);
+    view.setUint32(16, centralStart, true);
+    view.setUint16(20, 0, true);
+    return header;
+  }
+
+  function concatBytes(parts) {
+    const length = parts.reduce((sum, part) => sum + part.length, 0);
+    const output = new Uint8Array(length);
+    let offset = 0;
+    parts.forEach((part) => {
+      output.set(part, offset);
+      offset += part.length;
+    });
+    return output;
+  }
+
+  function crc32(bytes) {
+    let crc = 0xffffffff;
+    const table = crc32Table();
+    for (let index = 0; index < bytes.length; index += 1) {
+      crc = (crc >>> 8) ^ table[(crc ^ bytes[index]) & 0xff];
+    }
+    return (crc ^ 0xffffffff) >>> 0;
+  }
+
+  let cachedCrc32Table = null;
+  function crc32Table() {
+    if (cachedCrc32Table) return cachedCrc32Table;
+    cachedCrc32Table = new Uint32Array(256);
+    for (let index = 0; index < 256; index += 1) {
+      let value = index;
+      for (let bit = 0; bit < 8; bit += 1) {
+        value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+      }
+      cachedCrc32Table[index] = value >>> 0;
+    }
+    return cachedCrc32Table;
+  }
+
+  function excelNumber(value) {
+    return toNumber(value).toFixed(2);
+  }
+
+  function escapeXml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
   }
 
   function htmlField(label, value) {

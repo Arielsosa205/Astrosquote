@@ -32,6 +32,7 @@
       <button class="btn" id="manualBtn" type="button" data-i18n="manual">Manual</button>
       <button class="btn" id="importBtn" type="button" data-i18n="importHtml">Import HTML</button>
       <button class="btn" id="exportHtmlBtn" type="button" data-i18n="exportHtml">Export HTML</button>
+      <button class="btn" id="exportWpsBtn" type="button" data-i18n="exportWps">Export WPS</button>
       <button class="btn" id="printPdfBtn" type="button" data-i18n="printPdf">Print / PDF</button>
       <button class="btn" id="exportBtn" type="button" data-i18n="exportBackup">Export backup</button>
     </div>
@@ -82,10 +83,14 @@
           <label data-i18n="supplier">Supplier</label>
           <input id="supplierName" placeholder="Supplier name" data-i18n-placeholder="supplierPlaceholder">
         </div>
+        <div class="field">
+          <label data-i18n="quoteFreight">Quote freight</label>
+          <input id="quoteFreight" inputmode="decimal" placeholder="Optional total freight" data-i18n-placeholder="quoteFreightPlaceholder">
+        </div>
         <div class="quote-actions">
           <button class="btn primary" id="addProductBtn" type="button" data-i18n="addProduct">Add product</button>
           <button class="btn" id="addPhotosBtn" type="button" data-i18n="photos">Photos</button>
-          <button class="btn" id="shareGuestBtn" type="button" data-i18n="guestLink">Guest link</button>
+          <button class="btn" id="shareGuestBtn" type="button" data-i18n="guestLink">Customer link</button>
         </div>
       </section>
 

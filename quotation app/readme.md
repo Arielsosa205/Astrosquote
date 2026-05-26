@@ -6,8 +6,9 @@ This folder is ready to deploy to Netlify.
 
 - Creates quote history: `Quote 1`, `Quote 2`, etc.
 - Opens old quotes from each signed-in user's History.
-- Supports guest links that open only one quote.
-- Saves products, product prices, freight, available sizes, available colors, size chart, quantities and totals.
+- Supports customer links that open one quote as a compact read-only quote sheet.
+- Exports a WPS/Excel `.xlsx` sheet with formulas, embedded photos, line totals, total number, freight and actual payment.
+- Saves products, product prices, optional quote-level freight, product-level freight, available sizes, available colors, size chart, quantities and totals.
 - Uploads photos to Supabase Storage when online saving is configured.
 - Converts new photos to WebP as they are added, then uploads pending images in parallel with progress on save.
 - Large imported quotes are saved online automatically when the user is signed in, so browser storage limits do not eat the quote.
@@ -62,11 +63,12 @@ Export/import them after signing in, or assign their `owner_id` manually in Supa
 4. Add or paste photos.
 5. Save.
 6. Open old quotes from your own History.
-7. Use `Guest link` to share one quote without exposing the rest of the history.
+7. Use `Customer link` to share one quote sheet without exposing the rest of the history.
+8. Use `Export WPS` when the supplier wants a spreadsheet with formulas.
 
 If the top chip says `Local mode`, the app is not connected to Supabase yet.
 If it says `Guest mode`, you are working locally without an account.
 If it says `Online saving`, it is saving to Supabase.
-If it says `Guest quote`, the visitor can access only the quote from that link.
+If it says `Customer quote`, the visitor can access only the quote sheet from that link.
 
 For large quotes with many photos, sign in and use online saving. The app uploads images to Supabase Storage and stores only image URLs in the quote data.
